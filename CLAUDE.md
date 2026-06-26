@@ -592,9 +592,39 @@ Document ID = slug (`about-us`, `contact-us`, `how-to-buy`, `faq`)
 
 # Theme System
 
-Store colors are stored in `settings/store.theme` and applied as CSS custom properties.
+Two templates available, each with 5 color presets. Stored in `settings/store.theme`.
 
-CSS variables:
+## Templates
+
+### Urban Fashion Style
+Editorial, minimal, fashion-forward. Sharp edges, serif headings, full-bleed imagery.
+
+Components: `UrbanFashionHeader`, original `Footer`, `ProductCard`, `page.js`, `collections/*.js`
+
+Color presets: Classic Black, Ocean Blue, Rose Gold, Forest Sage, Sunset Warm
+
+### Happy Hobby
+Fun, colorful, playful. Rounded corners, bold colors, friendly feel for hobby & lifestyle shops.
+
+Components: `HappyHobbyHeader`, `HappyHobbyFooter`, `HappyHobbyProductCard`, `HappyHobbyHomePage`, `HappyHobbyCollectionsPage`, `HappyHobbyCollectionDetailPage`
+
+Color presets: Sunshine Orange, Fresh Mint, Sky Blue, Sweet Purple, Cherry Red
+
+## Settings format
+
+```js
+settings.theme = {
+  template: 'urban-fashion',  // or 'happy-hobby'
+  primary: '#000000',
+  primaryFg: '#ffffff',
+  accent: '#374151',
+  bg: '#ffffff',
+  surface: '#f9fafb',
+  text: '#111827',
+}
+```
+
+## CSS variables (colors)
 
 ```css
 --color-primary
@@ -605,9 +635,43 @@ CSS variables:
 --color-text
 ```
 
-Default preset: Urban Fashion (black/white).
+## CSS variables (structural — set by template)
 
-All presets are in `lib/theme.js`: Urban Fashion, Ocean Breeze, Rose Gold, Forest Sage, Sunset Warm.
+```css
+--tm-radius         /* card/container border-radius */
+--tm-radius-sm      /* small elements */
+--tm-radius-lg      /* large containers */
+--tm-radius-pill    /* buttons, badges (9999px for Happy Hobby) */
+--tm-card-shadow    /* card shadow (none for Urban Fashion) */
+--tm-card-hover-shadow
+```
+
+`[data-template="happy-hobby"]` sets non-zero values for these.
+
+## Template switching mechanism
+
+1. `applyTemplate(id)` sets `data-template` on `<html>`
+2. CSS variables respond to `[data-template="happy-hobby"]` selector
+3. React components call `useTheme().template` to switch between layout trees
+4. `app/layout.js` inline script reads `localStorage['store_theme'].template` on page load to prevent flash
+
+## Theme switching in components
+
+```js
+// Header.js, Footer.js, ProductCard.js
+const { template } = useTheme() || {}
+if (template === 'happy-hobby') return <HappyHobbyVersion />
+return <UrbanFashionVersion />
+```
+
+## Admin theme page (`/admin/theme`)
+
+Three-step UI:
+1. Choose template (visual card with mockup preview)
+2. Choose color preset (for that template's presets)
+3. Customize individual colors (color picker)
+4. Live preview showing layout + chosen colors
+5. Save → writes `settings.theme` to Firestore + localStorage
 
 Theme is cached in `localStorage` and applied via inline `<script>` in `app/layout.js` to prevent flash on load.
 

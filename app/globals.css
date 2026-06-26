@@ -14,6 +14,24 @@
   --color-bg: #ffffff;
   --color-surface: #f9fafb;
   --color-text: #111827;
+
+  /* Template structural variables — Urban Fashion defaults */
+  --tm-radius: 0px;
+  --tm-radius-sm: 0px;
+  --tm-radius-lg: 0px;
+  --tm-radius-pill: 0px;
+  --tm-card-shadow: none;
+  --tm-card-hover-shadow: none;
+}
+
+/* Happy Hobby: rounded, friendly, colorful */
+[data-template="happy-hobby"] {
+  --tm-radius: 0.875rem;
+  --tm-radius-sm: 0.5rem;
+  --tm-radius-lg: 1.25rem;
+  --tm-radius-pill: 9999px;
+  --tm-card-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  --tm-card-hover-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 html {

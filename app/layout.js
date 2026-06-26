@@ -17,6 +17,7 @@ const themeInitScript = `
   if(t){
     t=JSON.parse(t);
     var r=document.documentElement;
+    if(t.template)r.setAttribute('data-template',t.template);
     if(t.primary)r.style.setProperty('--color-primary',t.primary);
     if(t.primaryFg)r.style.setProperty('--color-primary-fg',t.primaryFg);
     if(t.accent)r.style.setProperty('--color-accent',t.accent);

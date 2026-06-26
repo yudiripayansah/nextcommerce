@@ -11,7 +11,7 @@ export default function StoreLayout({ children }) {
       <CustomerAuthProvider>
         <ThemeProvider>
           <FaviconSync />
-          <div className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg)' }}>
+          <div id="store-shell" className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg)' }}>
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
