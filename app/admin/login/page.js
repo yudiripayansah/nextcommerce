@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
 
         <p className="text-center text-xs text-gray-400 mt-6">
           Superadmin?{' '}
-          <a href="/login" className="text-gray-600 hover:underline">Login di sini</a>
+          <Link href="/login" className="text-gray-600 hover:underline">Login di sini</Link>
         </p>
       </div>
     </div>

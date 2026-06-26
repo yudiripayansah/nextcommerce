@@ -79,7 +79,7 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-gray-400 mt-6">
           Admin toko?{' '}
-          <a href="/admin/login" className="text-gray-600 hover:underline">Login di sini</a>
+          <Link href="/admin/login" className="text-gray-600 hover:underline">Login di sini</Link>
         </p>
       </div>
     </div>

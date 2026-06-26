@@ -190,7 +190,7 @@ export default function SuperadminPage() {
             <h1 className="font-bold text-gray-900">Superadmin Panel</h1>
             <p className="text-xs text-gray-500 mt-0.5">360&5 NextCommerce · {tenants.length} toko terdaftar</p>
           </div>
-          <a href="/login" className="text-sm text-gray-500 hover:text-gray-700">Keluar</a>
+          <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700">Keluar</Link>
         </div>
       </header>
 
@@ -262,9 +262,9 @@ export default function SuperadminPage() {
                     </td>
                     <td className="px-6 py-4 text-gray-500 text-xs">{formatDate(t.createdAt)}</td>
                     <td className="px-6 py-4">
-                      <a href={`/${t.slug}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
+                      <Link href={`/${t.slug}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs">
                         Buka Toko ↗
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))}
