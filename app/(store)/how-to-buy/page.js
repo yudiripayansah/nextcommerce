@@ -14,7 +14,7 @@ export default function HowToBuyPage() {
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">{page?.title || 'Cara Pembelian'}</h1>
       {page?.content ? (
-        <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: page.content }} />
+        <div className="rich-content" dangerouslySetInnerHTML={{ __html: page.content }} />
       ) : (
         <ol className="list-decimal list-inside space-y-3 text-gray-700">
           <li>Pilih produk yang Anda inginkan</li>

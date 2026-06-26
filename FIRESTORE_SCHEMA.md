@@ -13,7 +13,7 @@ Avoid:
 
 * Deep nesting
 * Complex joins
-* Large arrays
+* Large arrays that grow unbounded
 
 Use flat structures whenever possible.
 
@@ -23,34 +23,30 @@ Use flat structures whenever possible.
 
 ```txt
 settings
-products
 collections
+products
 orders
 customers
+addresses
 pages
+files
 ```
 
 ---
 
 # settings
 
-Document ID:
-
-```txt
-store
-```
-
-Structure:
+Document ID: `store` (singleton)
 
 ```js
 {
   storeName: "",
 
-  logo: "",
+  logo: "",             // Cloudinary URL
 
-  favicon: "",
+  favicon: "",          // Cloudinary URL
 
-  whatsappNumber: "",
+  whatsappNumber: "",   // format: 628xxxxxxxxxx (no + or spaces)
 
   email: "",
 
@@ -64,7 +60,14 @@ Structure:
 
   tiktok: "",
 
-  createdAt: null,
+  theme: {              // optional, color preset object
+    primary: "",
+    primaryFg: "",
+    accent: "",
+    bg: "",
+    surface: "",
+    text: ""
+  },
 
   updatedAt: null
 }
@@ -80,13 +83,13 @@ Structure:
 
   title: "",
 
-  handle: "",
+  handle: "",           // slugified, url-safe
 
   description: "",
 
-  image: "",
+  image: "",            // Cloudinary URL
 
-  status: "active",
+  status: "active",     // active | draft
 
   productCount: 0,
 
@@ -96,11 +99,12 @@ Structure:
 }
 ```
 
-Indexes:
+Query pattern:
 
-```txt
-status + createdAt
-handle
+```js
+// Avoid composite index: fetch all with single orderBy, filter client-side
+query(COL, orderBy('createdAt', 'desc'))
+// then: results.filter(c => c.status === 'active')
 ```
 
 ---
@@ -113,13 +117,13 @@ handle
 
   title: "",
 
-  handle: "",
+  handle: "",           // slugified, url-safe
 
   description: "",
 
-  featuredImage: "",
+  featuredImage: "",    // Cloudinary URL
 
-  images: [],
+  images: [],           // Cloudinary URLs
 
   tags: [],
 
@@ -127,17 +131,25 @@ handle
 
   collectionTitle: "",
 
-  minPrice: 0,
+  options: [            // max 3 options
+    { name: "Color", values: ["Black", "White"] }
+  ],
 
-  maxPrice: 0,
+  variants: [           // generated from options
+    {
+      id: "",
+      title: "Black / M",
+      sku: "",
+      price: 0,
+      stock: 0,
+      image: "",
+      option1: "Black",
+      option2: "M",
+      option3: ""
+    }
+  ],
 
-  totalStock: 0,
-
-  options: [],
-
-  variants: [],
-
-  status: "active",
+  status: "active",     // active | draft | archived
 
   createdAt: null,
 
@@ -145,64 +157,56 @@ handle
 }
 ```
 
-Indexes:
+Important:
 
-```txt
-status + createdAt
-collectionId + status
-handle
-```
-
----
-
-# Product Options
+`minPrice`, `maxPrice`, `totalStock` are NOT stored in Firestore.
+They are computed client-side by `normalize()` in `services/products.js`:
 
 ```js
-[
-  {
-    name: "Color",
-    values: ["Black", "White"]
+function normalize(product) {
+  const variants = product.variants || []
+  const prices = variants.map(v => v.price || 0).filter(Boolean)
+  const stock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
+  return {
+    ...product,
+    minPrice: prices.length ? Math.min(...prices) : 0,
+    maxPrice: prices.length ? Math.max(...prices) : 0,
+    totalStock: stock,
   }
-]
+}
 ```
 
----
-
-# Product Variants
+Query patterns:
 
 ```js
-[
-  {
-    id: "",
+// Products list: single orderBy + client filter
+query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
+// then filter by status/collectionId client-side
 
-    title: "Black / XL",
+// By handle: where only
+query(COL, where('handle', '==', handle))
 
-    sku: "",
+// By collection: where only, sort by createdAt.seconds client-side
+query(COL, where('collectionId', '==', collectionId))
+// then .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
 
-    price: 120000,
-
-    stock: 10,
-
-    image: "",
-
-    option1: "Black",
-
-    option2: "XL",
-
-    option3: ""
-  }
-]
+// Search: fetch active with limit, filter client-side by title/description/tags
+query(COL, where('status', '==', 'active'), limit(200))
 ```
 
 ---
 
 # customers
 
+Document ID: Firebase Auth UID (registered customers) or Firestore auto-ID (guest orders)
+
 ```js
 {
   id: "",
 
   name: "",
+
+  email: "",            // populated for registered customers, empty for guests
 
   whatsapp: "",
 
@@ -212,16 +216,54 @@ handle
 
   lastOrderDate: null,
 
-  createdAt: null
+  createdAt: null,
+
+  updatedAt: null
 }
 ```
 
-Indexes:
+Customers are upserted automatically when an order is placed.
 
-```txt
-whatsapp
-createdAt
+Registered customers are created in Firebase Auth + this collection simultaneously.
+
+---
+
+# addresses
+
+```js
+{
+  id: "",
+
+  customerId: "",       // Firebase Auth UID of the customer
+
+  recipientName: "",
+
+  phone: "",
+
+  address: "",
+
+  city: "",
+
+  province: "",
+
+  postalCode: "",
+
+  isDefault: false,
+
+  createdAt: null,
+
+  updatedAt: null
+}
 ```
+
+Query pattern:
+
+```js
+// Fetch customer addresses, default first
+query(COL, where('customerId', '==', customerId), orderBy('isDefault', 'desc'))
+```
+
+When setting a new default: clear the old default first, then set the new one.
 
 ---
 
@@ -231,7 +273,7 @@ createdAt
 {
   id: "",
 
-  orderNumber: "",
+  orderNumber: "",      // e.g. ORD-20240101-XXXX
 
   customerId: "",
 
@@ -241,13 +283,22 @@ createdAt
 
   notes: "",
 
+  items: [
+    {
+      productId: "",
+      productTitle: "",
+      variantTitle: "",
+      quantity: 1,
+      price: 120000,
+      subtotal: 120000
+    }
+  ],
+
   totalItems: 0,
 
   totalAmount: 0,
 
-  status: "new",
-
-  items: [],
+  status: "new",        // new | contacted | paid | shipped | completed | cancelled
 
   createdAt: null,
 
@@ -255,41 +306,33 @@ createdAt
 }
 ```
 
-Indexes:
+Statuses (in order):
 
 ```txt
-status + createdAt
-customerId + createdAt
-orderNumber
+new        — order just placed via WhatsApp
+contacted  — admin has contacted the customer
+paid       — customer has paid
+shipped    — order has been shipped
+completed  — order delivered and done
+cancelled  — order cancelled
 ```
 
----
-
-# Order Items
+Query patterns:
 
 ```js
-[
-  {
-    productId: "",
+// List all: single orderBy
+query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
 
-    productTitle: "",
-
-    variantTitle: "",
-
-    quantity: 1,
-
-    price: 120000,
-
-    subtotal: 120000
-  }
-]
+// By customer: where only, sort client-side
+query(COL, where('customerId', '==', customerId))
+// then .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
 ```
 
 ---
 
 # pages
 
-Document IDs:
+Document ID = slug (fixed set):
 
 ```txt
 about-us
@@ -298,48 +341,72 @@ how-to-buy
 faq
 ```
 
-Structure:
-
 ```js
 {
   title: "",
 
-  content: "",
+  content: "",          // HTML string from rich text editor
 
   updatedAt: null
 }
+```
+
+These documents are pre-created by the seed script and edited via `/admin/pages`.
+
+---
+
+# files
+
+Media library records (mirrors Cloudinary).
+
+```js
+{
+  id: "",
+
+  url: "",              // Cloudinary secure_url
+
+  publicId: "",         // Cloudinary public_id (for deletion)
+
+  name: "",
+
+  size: 0,              // bytes
+
+  format: "",           // jpg, png, webp, etc.
+
+  width: 0,
+
+  height: 0,
+
+  createdAt: null
+}
+```
+
+Query pattern:
+
+```js
+query(COL, orderBy('createdAt', 'desc'), limit(200))
 ```
 
 ---
 
 # Analytics Strategy
 
-Do NOT calculate analytics from all orders every page load.
+Do NOT calculate analytics from all orders on every page load.
 
-Store summary values.
+For MVP: query orders with simple filters and compute totals client-side in the dashboard.
 
-Future collection:
+Future: use a separate `analytics` collection (denormalized summary document) updated via Cloud Functions when order status changes.
 
-```txt
-analytics
-```
-
-Document:
+Future document structure:
 
 ```js
+// analytics/summary
 {
   totalRevenue: 0,
-
   totalOrders: 0,
-
   totalCustomers: 0,
-
   monthlyRevenue: 0,
-
-  monthlyOrders: 0
+  monthlyOrders: 0,
+  updatedAt: null
 }
 ```
-
-Use Cloud Functions later if needed.
-
-For MVP, simple queries are acceptable.

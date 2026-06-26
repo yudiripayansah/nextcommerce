@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import Button from '@/components/ui/Button'
+import RichTextEditor from '@/components/admin/RichTextEditor'
 import { getPage, savePage } from '@/services/pages'
 import { PAGE_SLUGS, PAGE_TITLES } from '@/constants'
 import toast from 'react-hot-toast'
@@ -62,15 +63,11 @@ export default function PagesPage() {
 
         <div className="p-6 space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">Konten</label>
-            <textarea
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Konten</label>
+            <RichTextEditor
               value={pages[active]?.content || ''}
-              onChange={(e) => setContent(e.target.value)}
-              rows={16}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-y"
-              placeholder="Tulis konten halaman di sini..."
+              onChange={setContent}
             />
-            <p className="text-xs text-gray-400 mt-1">Mendukung HTML dasar</p>
           </div>
 
           <Button onClick={handleSave} loading={saving}>

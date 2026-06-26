@@ -2,26 +2,25 @@
 
 export default function ProductVariantSelector({ options, variants, selectedOptions, onChange }) {
   function selectOption(optionName, value) {
-    const next = { ...selectedOptions, [optionName]: value }
-    onChange(next)
+    onChange({ ...selectedOptions, [optionName]: value })
   }
 
   function isAvailable(optionName, value) {
     const hypothetical = { ...selectedOptions, [optionName]: value }
-    return variants.some((v) => {
-      return options.every((opt, i) => {
-        const key = `option${i + 1}`
-        return v[key] === hypothetical[opt.name]
-      })
-    })
+    return variants.some((v) =>
+      options.every((opt, i) => v[`option${i + 1}`] === hypothetical[opt.name])
+    )
   }
 
   return (
-    <div className="space-y-4">
-      {options.map((opt, i) => (
+    <div className="space-y-5">
+      {options.map((opt) => (
         <div key={opt.name}>
-          <p className="text-sm font-medium text-gray-700 mb-2">
-            {opt.name}: <span className="font-normal">{selectedOptions[opt.name] || '-'}</span>
+          <p className="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">
+            {opt.name}:{' '}
+            <span className="font-normal normal-case tracking-normal text-gray-600">
+              {selectedOptions[opt.name] || '-'}
+            </span>
           </p>
           <div className="flex flex-wrap gap-2">
             {opt.values.map((val) => {
@@ -32,14 +31,20 @@ export default function ProductVariantSelector({ options, variants, selectedOpti
                   key={val}
                   onClick={() => available && selectOption(opt.name, val)}
                   disabled={!available}
-                  className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+                  className={`min-w-[44px] px-3 py-2 text-sm font-medium border transition-all rounded-sm ${
                     selected
-                      ? 'border-blue-600 bg-blue-600 text-white'
+                      ? ''
                       : available
-                      ? 'border-gray-300 hover:border-gray-400 text-gray-700'
-                      : 'border-gray-200 text-gray-300 cursor-not-allowed line-through'
+                      ? 'border-gray-300 text-gray-800 hover:opacity-80'
+                      : 'border-gray-200 text-gray-300 cursor-not-allowed relative overflow-hidden'
                   }`}
+                  style={selected ? { background: 'var(--color-primary)', color: 'var(--color-primary-fg)', borderColor: 'var(--color-primary)' } : undefined}
                 >
+                  {!available && (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="absolute w-full border-t border-gray-300 rotate-45" />
+                    </span>
+                  )}
                   {val}
                 </button>
               )

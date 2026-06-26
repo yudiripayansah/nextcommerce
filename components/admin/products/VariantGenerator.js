@@ -4,12 +4,22 @@ import { useState } from 'react'
 import Button from '@/components/ui/Button'
 
 export default function VariantGenerator({ options, onChange }) {
+  // Track raw text per option so commas don't disappear mid-typing
+  const [rawInputs, setRawInputs] = useState({})
+
   function addOption() {
     if (options.length >= 3) return
     onChange([...options, { name: '', values: [] }])
   }
 
   function removeOption(i) {
+    const newRaw = {}
+    Object.entries(rawInputs).forEach(([k, v]) => {
+      const ki = parseInt(k)
+      if (ki < i) newRaw[ki] = v
+      else if (ki > i) newRaw[ki - 1] = v
+    })
+    setRawInputs(newRaw)
     onChange(options.filter((_, idx) => idx !== i))
   }
 
@@ -19,14 +29,20 @@ export default function VariantGenerator({ options, onChange }) {
     onChange(updated)
   }
 
-  function setOptionValues(i, raw) {
-    const values = raw
-      .split(',')
-      .map((v) => v.trim())
-      .filter(Boolean)
+  function handleValuesInput(i, raw) {
+    setRawInputs((prev) => ({ ...prev, [i]: raw }))
+    const values = raw.split(',').map((v) => v.trim()).filter(Boolean)
     const updated = [...options]
     updated[i] = { ...updated[i], values }
     onChange(updated)
+  }
+
+  function handleValuesBlur(i) {
+    setRawInputs((prev) => {
+      const next = { ...prev }
+      delete next[i]
+      return next
+    })
   }
 
   return (
@@ -66,9 +82,10 @@ export default function VariantGenerator({ options, onChange }) {
           </div>
           <input
             type="text"
-            value={opt.values.join(', ')}
-            onChange={(e) => setOptionValues(i, e.target.value)}
-            placeholder="Nilai dipisah koma: Merah, Putih, Hitam"
+            value={i in rawInputs ? rawInputs[i] : opt.values.join(', ')}
+            onChange={(e) => handleValuesInput(i, e.target.value)}
+            onBlur={() => handleValuesBlur(i)}
+            placeholder="Nilai dipisah koma: S, M, L, XL"
             className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {opt.values.length > 0 && (

@@ -20,8 +20,12 @@ export default function LoginPage() {
     try {
       await login(email, password)
       router.replace('/admin')
-    } catch {
-      setError('Email atau password salah.')
+    } catch (err) {
+      if (err?.message === 'CUSTOMER_ACCOUNT') {
+        setError('Akun ini adalah akun pelanggan. Gunakan halaman login toko.')
+      } else {
+        setError('Email atau password salah.')
+      }
     } finally {
       setLoading(false)
     }

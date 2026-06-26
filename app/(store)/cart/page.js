@@ -26,7 +26,11 @@ export default function CartPage() {
         </div>
         <p className="text-gray-900 font-semibold text-lg mb-2">Keranjang Kosong</p>
         <p className="text-gray-500 text-sm mb-6">Belum ada produk yang ditambahkan</p>
-        <Link href="/collections" className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors">
+        <Link
+          href="/collections"
+          className="inline-block px-6 py-2.5 rounded-xl font-medium hover:opacity-90 transition-opacity"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
+        >
           Mulai Belanja
         </Link>
       </div>

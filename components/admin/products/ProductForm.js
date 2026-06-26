@@ -29,6 +29,7 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
   })
   const [errors, setErrors] = useState({})
   const [collections, setCollections] = useState([])
+  const [globalPrice, setGlobalPrice] = useState('')
 
   useEffect(() => {
     getCollections({ status: 'active' }).then((c) =>
@@ -55,8 +56,20 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
   }
 
   function handleOptionsChange(options) {
-    const variants = generateVariantCombinations(options)
+    const price = Number(globalPrice) || 0
+    const variants = generateVariantCombinations(options).map((v) => ({
+      ...v,
+      price: price || v.price,
+    }))
     setForm((prev) => ({ ...prev, options, variants }))
+  }
+
+  function applyGlobalPrice(price) {
+    const p = Number(price) || 0
+    setForm((prev) => ({
+      ...prev,
+      variants: prev.variants.map((v) => ({ ...v, price: p })),
+    }))
   }
 
   function handleCollectionChange(e) {
@@ -142,6 +155,34 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
 
           <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
             <h3 className="font-medium text-gray-900">Varian</h3>
+
+            {/* Global price */}
+            <div className="flex items-end gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Harga Global (Rp)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={globalPrice}
+                  onChange={(e) => {
+                    setGlobalPrice(e.target.value)
+                    if (form.variants.length > 0) applyGlobalPrice(e.target.value)
+                  }}
+                  placeholder="Contoh: 150000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {form.variants.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => applyGlobalPrice(globalPrice)}
+                  className="px-3 py-2 text-sm font-medium text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 whitespace-nowrap"
+                >
+                  Terapkan ke Semua
+                </button>
+              )}
+            </div>
+
             <VariantGenerator options={form.options} onChange={handleOptionsChange} />
             {errors.variants && <p className="text-xs text-red-600">{errors.variants}</p>}
             <VariantTable variants={form.variants} onChange={(v) => set('variants', v)} />

@@ -1,18 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useCart } from '@/store/cartStore'
+import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { createOrder } from '@/services/orders'
 import { upsertCustomer } from '@/services/customers'
 import { buildWhatsAppMessage, generateOrderNumber } from '@/lib/helpers'
 
 export default function WhatsAppOrderButton({ settings }) {
   const { cart, totalItems, totalAmount, dispatch } = useCart()
-  const [step, setStep] = useState('form') // 'form' | 'loading'
+  const { customerUser, customer } = useCustomerAuth()
+  const [step, setStep] = useState('form')
   const [name, setName] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
+
+  // Pre-fill from customer profile if logged in
+  useEffect(() => {
+    if (customer) {
+      setName(customer.name || '')
+      setWhatsapp(customer.whatsapp || '')
+    }
+  }, [customer])
 
   async function handleOrder(e) {
     e.preventDefault()
@@ -34,7 +45,10 @@ export default function WhatsAppOrderButton({ settings }) {
         subtotal: i.subtotal,
       }))
 
-      const customerId = await upsertCustomer(name, whatsapp, totalAmount)
+      // If logged in, use UID as customerId; otherwise upsert by WhatsApp
+      const customerId = customerUser
+        ? customerUser.uid
+        : await upsertCustomer(name, whatsapp, totalAmount)
 
       await createOrder({
         orderNumber,
@@ -64,6 +78,15 @@ export default function WhatsAppOrderButton({ settings }) {
 
   return (
     <form onSubmit={handleOrder} className="space-y-3">
+      {/* Login nudge for guest */}
+      {!customerUser && (
+        <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+          <Link href="/account/login" className="text-black font-medium hover:underline">Masuk</Link> atau{' '}
+          <Link href="/account/register" className="text-black font-medium hover:underline">daftar</Link>{' '}
+          untuk mengisi otomatis dan menyimpan riwayat pesanan.
+        </p>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
         <input
@@ -102,7 +125,8 @@ export default function WhatsAppOrderButton({ settings }) {
       <button
         type="submit"
         disabled={step === 'loading'}
-        className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 font-semibold py-3 rounded-xl transition-opacity hover:opacity-90 disabled:opacity-60"
+        style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
       >
         {step === 'loading' ? (
           <>

@@ -16,7 +16,7 @@ export default function ContactUsPage() {
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">{page?.title || 'Hubungi Kami'}</h1>
       {page?.content && (
-        <div className="prose max-w-none text-gray-700 mb-8" dangerouslySetInnerHTML={{ __html: page.content }} />
+        <div className="rich-content mb-8" dangerouslySetInnerHTML={{ __html: page.content }} />
       )}
       {settings && (
         <div className="bg-gray-50 rounded-xl p-6 space-y-3 text-sm">

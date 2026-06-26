@@ -1,48 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { storage } from '@/lib/firebase'
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
-import Image from 'next/image'
+import MediaPicker from '@/components/admin/MediaPicker'
 
 export default function ImageUploader({ images = [], onChange }) {
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
-  async function handleFiles(e) {
-    const files = Array.from(e.target.files)
-    if (!files.length) return
-    setUploading(true)
-
-    const urls = []
-    for (const file of files) {
-      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`)
-      await new Promise((resolve, reject) => {
-        const task = uploadBytesResumable(storageRef, file)
-        task.on(
-          'state_changed',
-          (s) => setProgress(Math.round((s.bytesTransferred / s.totalBytes) * 100)),
-          reject,
-          async () => {
-            const url = await getDownloadURL(task.snapshot.ref)
-            urls.push(url)
-            resolve()
-          }
-        )
-      })
-    }
-
-    onChange([...images, ...urls])
-    setUploading(false)
-    setProgress(0)
-    e.target.value = ''
+  function handleSelect(urls) {
+    const merged = [...new Set([...images, ...urls])]
+    onChange(merged)
   }
 
-  async function handleRemove(url) {
-    try {
-      const storageRef = ref(storage, url)
-      await deleteObject(storageRef)
-    } catch {}
+  function handleRemove(url) {
     onChange(images.filter((u) => u !== url))
   }
 
@@ -52,7 +21,7 @@ export default function ImageUploader({ images = [], onChange }) {
 
       <div className="flex flex-wrap gap-3">
         {images.map((url, i) => (
-          <div key={url} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 group">
+          <div key={url} className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-200 group flex-shrink-0">
             <img src={url} alt="" className="w-full h-full object-cover" />
             <button
               type="button"
@@ -71,27 +40,29 @@ export default function ImageUploader({ images = [], onChange }) {
           </div>
         ))}
 
-        <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-          {uploading ? (
-            <span className="text-xs text-blue-600">{progress}%</span>
-          ) : (
-            <>
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="text-xs text-gray-500 mt-1">Upload</span>
-            </>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFiles}
-            disabled={uploading}
-            className="hidden"
-          />
-        </label>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-colors flex-shrink-0"
+        >
+          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="text-xs text-gray-500 mt-1">Tambah</span>
+        </button>
       </div>
+
+      {images.length > 0 && (
+        <p className="text-xs text-gray-400">Gambar pertama akan menjadi gambar utama produk</p>
+      )}
+
+      <MediaPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handleSelect}
+        multiple
+        initialSelected={images}
+      />
     </div>
   )
 }

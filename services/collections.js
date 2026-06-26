@@ -16,10 +16,12 @@ import {
 const COL = collection(db, 'collections')
 
 export async function getCollections({ status } = {}) {
-  let q = query(COL, orderBy('createdAt', 'desc'))
-  if (status) q = query(COL, where('status', '==', status), orderBy('createdAt', 'desc'))
+  // Fetch all then filter client-side to avoid composite index requirement
+  const q = query(COL, orderBy('createdAt', 'desc'))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  let results = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  if (status) results = results.filter((c) => c.status === status)
+  return results
 }
 
 export async function getCollectionByHandle(handle) {

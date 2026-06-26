@@ -15,12 +15,13 @@ import {
 
 const COL = collection(db, 'orders')
 
-export async function getOrders({ status, pageLimit = 10 } = {}) {
-  let constraints = [orderBy('createdAt', 'desc'), limit(pageLimit)]
-  if (status) constraints = [where('status', '==', status), ...constraints]
-  const q = query(COL, ...constraints)
+export async function getOrders({ status, pageLimit = 50 } = {}) {
+  // Fetch with single orderBy, filter status client-side
+  const q = query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  let results = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  if (status) results = results.filter((o) => o.status === status)
+  return results
 }
 
 export async function getOrderById(id) {
@@ -46,11 +47,9 @@ export async function updateOrderStatus(id, status) {
 }
 
 export async function getOrdersByCustomer(customerId) {
-  const q = query(
-    COL,
-    where('customerId', '==', customerId),
-    orderBy('createdAt', 'desc')
-  )
+  const q = query(COL, where('customerId', '==', customerId))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
 }

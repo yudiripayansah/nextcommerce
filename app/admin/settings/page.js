@@ -5,8 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { getSettings, saveSettings } from '@/services/settings'
-import { storage } from '@/lib/firebase'
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import MediaPicker from '@/components/admin/MediaPicker'
 import toast from 'react-hot-toast'
 
 const DEFAULTS = {
@@ -25,7 +24,8 @@ const DEFAULTS = {
 export default function SettingsPage() {
   const [form, setForm] = useState(DEFAULTS)
   const [saving, setSaving] = useState(false)
-  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoPicker, setLogoPicker] = useState(false)
+  const [faviconPicker, setFaviconPicker] = useState(false)
 
   useEffect(() => {
     getSettings().then((s) => { if (s) setForm({ ...DEFAULTS, ...s }) })
@@ -33,20 +33,6 @@ export default function SettingsPage() {
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  async function uploadImage(file, field) {
-    const storageRef = ref(storage, `settings/${field}_${Date.now()}`)
-    setUploadingLogo(true)
-    await new Promise((resolve, reject) => {
-      const task = uploadBytesResumable(storageRef, file)
-      task.on('state_changed', null, reject, async () => {
-        const url = await getDownloadURL(task.snapshot.ref)
-        set(field, url)
-        resolve()
-      })
-    })
-    setUploadingLogo(false)
   }
 
   async function handleSave(e) {
@@ -88,23 +74,54 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-gray-900">Logo & Favicon</h3>
           <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">Logo</label>
-            {form.logo && <img src={form.logo} alt="Logo" className="h-12 mb-2 object-contain" />}
-            <label className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm cursor-pointer hover:bg-gray-50">
-              {uploadingLogo ? 'Mengupload...' : 'Upload Logo'}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files[0] && uploadImage(e.target.files[0], 'logo')}
-              />
-            </label>
+            {form.logo ? (
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-24 h-16 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <img src={form.logo} alt="Logo" className="max-h-full max-w-full object-contain p-1" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => setLogoPicker(true)} className="text-sm text-blue-600 hover:underline text-left">Ganti Logo</button>
+                  <button type="button" onClick={() => set('logo', '')} className="text-sm text-red-500 hover:underline text-left">Hapus</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setLogoPicker(true)}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Pilih Logo dari Media Library
+              </button>
+            )}
           </div>
-          <Input
-            label="URL Favicon"
-            value={form.favicon}
-            onChange={(e) => set('favicon', e.target.value)}
-            placeholder="https://..."
-          />
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Favicon</label>
+            {form.favicon ? (
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-16 h-16 border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <img src={form.favicon} alt="Favicon" className="max-h-full max-w-full object-contain p-1" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <button type="button" onClick={() => setFaviconPicker(true)} className="text-sm text-blue-600 hover:underline text-left">Ganti Favicon</button>
+                  <button type="button" onClick={() => set('favicon', '')} className="text-sm text-red-500 hover:underline text-left">Hapus</button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setFaviconPicker(true)}
+                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Pilih Favicon dari Media Library
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Social */}
@@ -119,6 +136,21 @@ export default function SettingsPage() {
           Simpan Pengaturan
         </Button>
       </form>
+
+      <MediaPicker
+        open={logoPicker}
+        onClose={() => setLogoPicker(false)}
+        onSelect={(url) => { set('logo', url); setLogoPicker(false) }}
+        multiple={false}
+        initialSelected={form.logo ? [form.logo] : []}
+      />
+      <MediaPicker
+        open={faviconPicker}
+        onClose={() => setFaviconPicker(false)}
+        onSelect={(url) => { set('favicon', url); setFaviconPicker(false) }}
+        multiple={false}
+        initialSelected={form.favicon ? [form.favicon] : []}
+      />
     </AdminLayout>
   )
 }
