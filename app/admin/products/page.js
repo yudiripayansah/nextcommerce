@@ -37,6 +37,7 @@ export default function ProductsPage() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [tenantId])
 
   const filtered = useMemo(() => {

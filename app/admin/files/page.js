@@ -36,6 +36,7 @@ export default function FilesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const inputRef = useRef(null)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (tenantId) load() }, [tenantId])
 
   async function load() {

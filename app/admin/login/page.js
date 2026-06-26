@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (user) router.replace('/admin')
-  }, [user])
+  }, [user, router])
 
   async function handleSubmit(e) {
     e.preventDefault()

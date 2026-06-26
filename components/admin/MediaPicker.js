@@ -31,6 +31,7 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
       : []
     setSelected(initial)
     load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   async function load() {

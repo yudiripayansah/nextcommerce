@@ -13,7 +13,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <span className="font-bold text-xl text-gray-900">NextCommerce</span>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">Login Admin</Link>
+            <Link href="/admin/login" className="text-sm text-gray-600 hover:text-gray-900">Login Admin</Link>
             <Link href="/register" className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors">
               Daftar Gratis
             </Link>
@@ -33,7 +33,7 @@ export default function LandingPage() {
           <Link href="/register" className="px-8 py-3.5 bg-black text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors text-base">
             Mulai Gratis Sekarang
           </Link>
-          <Link href="/login" className="px-8 py-3.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-base">
+          <Link href="/admin/login" className="px-8 py-3.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors text-base">
             Sudah Punya Toko
           </Link>
         </div>

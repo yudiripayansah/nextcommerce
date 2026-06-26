@@ -12,7 +12,7 @@ const STATUS_COLOR = { active: 'bg-green-100 text-green-700', inactive: 'bg-red-
 const EMPTY_FORM = { storeName: '', ownerName: '', email: '', password: '', whatsapp: '' }
 
 function CreateTenantModal({ onClose, onCreated }) {
-  const { user } = useAuth()
+  const { superAdmin: user } = useSuperAdmin()
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -156,7 +156,8 @@ export default function SuperadminPage() {
       return
     }
     getTenants().then(setTenants).finally(() => setLoading(false))
-  }, [authLoading, user, role])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user, router])
 
   function handleCreated({ tenantId, slug }) {
     getTenants().then(setTenants)
