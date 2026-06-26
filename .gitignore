@@ -31,3 +31,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase Admin SDK credentials
+nextcommerce-f2631-firebase-adminsdk-fbsvc-4b8f056d6e.json
