@@ -1,8 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import EmptyState from '../ui/EmptyState'
 import LoadingSpinner from '../ui/LoadingSpinner'
+
+function SortIcon({ dir }) {
+  return (
+    <span className="inline-flex flex-col ml-1 gap-[2px]">
+      <svg
+        className={`w-2.5 h-2.5 ${dir === 'asc' ? 'text-gray-900' : 'text-gray-300'}`}
+        viewBox="0 0 10 6" fill="currentColor"
+      >
+        <path d="M5 0L0 6h10z" />
+      </svg>
+      <svg
+        className={`w-2.5 h-2.5 ${dir === 'desc' ? 'text-gray-900' : 'text-gray-300'}`}
+        viewBox="0 0 10 6" fill="currentColor"
+      >
+        <path d="M5 6L0 0h10z" />
+      </svg>
+    </span>
+  )
+}
+
+function getValue(row, key) {
+  const v = row[key]
+  if (v == null) return ''
+  // Firestore Timestamp
+  if (typeof v === 'object' && typeof v.seconds === 'number') return v.seconds
+  if (typeof v === 'object' && typeof v.toDate === 'function') return v.toDate().getTime()
+  return v
+}
+
+function sortData(data, sortKey, sortDir) {
+  if (!sortKey) return data
+  return [...data].sort((a, b) => {
+    const va = getValue(a, sortKey)
+    const vb = getValue(b, sortKey)
+    let cmp = 0
+    if (typeof va === 'number' && typeof vb === 'number') {
+      cmp = va - vb
+    } else {
+      cmp = String(va).localeCompare(String(vb), 'id', { numeric: true })
+    }
+    return sortDir === 'desc' ? -cmp : cmp
+  })
+}
 
 export default function DataTable({
   columns,
@@ -17,14 +60,23 @@ export default function DataTable({
   actions,
 }) {
   const [localSearch, setLocalSearch] = useState('')
+  const [sortKey, setSortKey] = useState(null)
+  const [sortDir, setSortDir] = useState('asc')
+
+  function handleHeaderClick(col) {
+    if (col.sortable === false || col.key.startsWith('__')) return
+    if (sortKey === col.key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(col.key)
+      setSortDir('asc')
+    }
+  }
 
   const handleSearch = (e) => {
     const val = e.target.value
-    if (onSearch) {
-      onSearch(val)
-    } else {
-      setLocalSearch(val)
-    }
+    if (onSearch) onSearch(val)
+    else setLocalSearch(val)
   }
 
   const searchTerm = onSearch ? searchValue : localSearch
@@ -37,6 +89,11 @@ export default function DataTable({
         })
       )
     : data
+
+  const sortedData = useMemo(
+    () => sortData(filteredData, sortKey, sortDir),
+    [filteredData, sortKey, sortDir]
+  )
 
   return (
     <div>
@@ -62,26 +119,34 @@ export default function DataTable({
 
       {loading ? (
         <LoadingSpinner className="py-16" />
-      ) : filteredData.length === 0 ? (
+      ) : sortedData.length === 0 ? (
         <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left">
               <tr>
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    className="px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide"
-                    style={col.width ? { width: col.width } : {}}
-                  >
-                    {col.label}
-                  </th>
-                ))}
+                {columns.map((col) => {
+                  const isSortable = col.sortable !== false && !String(col.key).startsWith('__')
+                  const isActive = sortKey === col.key
+                  return (
+                    <th
+                      key={col.key}
+                      onClick={() => handleHeaderClick(col)}
+                      className={`px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap ${isSortable ? 'cursor-pointer select-none hover:text-gray-700' : ''}`}
+                      style={col.width ? { width: col.width } : {}}
+                    >
+                      <span className="inline-flex items-center gap-0.5">
+                        {col.label}
+                        {isSortable && <SortIcon dir={isActive ? sortDir : null} />}
+                      </span>
+                    </th>
+                  )
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {filteredData.map((row, i) => (
+              {sortedData.map((row, i) => (
                 <tr key={row.id || i} className="hover:bg-gray-50">
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3 text-gray-700">
