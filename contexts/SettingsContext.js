@@ -5,12 +5,13 @@ import { getSettings } from '@/services/settings'
 
 const SettingsContext = createContext(null)
 
-export function SettingsProvider({ children }) {
+export function SettingsProvider({ tenantId, children }) {
   const [settings, setSettings] = useState(null)
 
   useEffect(() => {
-    getSettings().then(setSettings).catch(() => {})
-  }, [])
+    if (!tenantId) return
+    getSettings(tenantId).then(setSettings).catch(() => {})
+  }, [tenantId])
 
   return <SettingsContext.Provider value={settings}>{children}</SettingsContext.Provider>
 }

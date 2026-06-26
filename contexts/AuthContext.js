@@ -3,22 +3,44 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
-import { auth, db } from '@/lib/firebase'
+import { storeAuth, db } from '@/lib/firebase'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [tenantId, setTenantId] = useState(null)
+  const [tenant, setTenant] = useState(null)
+  const [role, setRole] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    const unsub = onAuthStateChanged(storeAuth, async (u) => {
       if (u) {
-        // Only treat as admin if there is NO customer document for this UID
-        const customerSnap = await getDoc(doc(db, 'customers', u.uid))
-        setUser(customerSnap.exists() ? null : u)
+        const userSnap = await getDoc(doc(db, 'users', u.uid))
+        if (userSnap.exists() && userSnap.data().role === 'admin') {
+          const userData = userSnap.data()
+          setUser(u)
+          setRole('admin')
+          const tid = userData.tenantId || null
+          setTenantId(tid)
+          if (tid) {
+            const tenantSnap = await getDoc(doc(db, 'tenants', tid))
+            setTenant(tenantSnap.exists() ? { id: tenantSnap.id, ...tenantSnap.data() } : null)
+          } else {
+            setTenant(null)
+          }
+        } else {
+          setUser(null)
+          setRole(null)
+          setTenantId(null)
+          setTenant(null)
+        }
       } else {
         setUser(null)
+        setRole(null)
+        setTenantId(null)
+        setTenant(null)
       }
       setLoading(false)
     })
@@ -26,20 +48,28 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function login(email, password) {
-    const cred = await signInWithEmailAndPassword(auth, email, password)
-    // Reject customers trying to use the admin portal
-    const customerSnap = await getDoc(doc(db, 'customers', cred.user.uid))
-    if (customerSnap.exists()) {
-      await signOut(auth)
-      throw new Error('CUSTOMER_ACCOUNT')
+    const cred = await signInWithEmailAndPassword(storeAuth, email, password)
+    const userSnap = await getDoc(doc(db, 'users', cred.user.uid))
+    if (!userSnap.exists() || userSnap.data().role !== 'admin') {
+      await signOut(storeAuth)
+      throw new Error('NOT_ADMIN')
     }
-    return cred
+    const userData = userSnap.data()
+    const tid = userData.tenantId || null
+    setUser(cred.user)
+    setRole('admin')
+    setTenantId(tid)
+    if (tid) {
+      const tenantSnap = await getDoc(doc(db, 'tenants', tid))
+      setTenant(tenantSnap.exists() ? { id: tenantSnap.id, ...tenantSnap.data() } : null)
+    }
+    return { cred, role: 'admin' }
   }
 
-  const logout = () => signOut(auth)
+  const logout = () => signOut(storeAuth)
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, tenantId, tenant, role, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

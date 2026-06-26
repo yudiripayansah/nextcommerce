@@ -5,24 +5,27 @@ import { useRouter, useParams } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import ProductForm from '@/components/admin/products/ProductForm'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/contexts/AuthContext'
 import { getProductById, updateProduct } from '@/services/products'
 import toast from 'react-hot-toast'
 
 export default function EditProductPage() {
   const { id } = useParams()
+  const { tenantId } = useAuth()
   const router = useRouter()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    getProductById(id).then(setData).finally(() => setLoading(false))
-  }, [id])
+    if (!tenantId) return
+    getProductById(tenantId, id).then(setData).finally(() => setLoading(false))
+  }, [tenantId, id])
 
   async function handleSubmit(form) {
     setSaving(true)
     try {
-      await updateProduct(id, form)
+      await updateProduct(tenantId, id, form)
       toast.success('Produk berhasil disimpan')
       router.push('/admin/products')
     } catch {

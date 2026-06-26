@@ -6,17 +6,19 @@ import {
   serverTimestamp,
 } from '@/lib/firestore'
 
-const SETTINGS_DOC = doc(db, 'settings', 'store')
+function ref(tenantId) {
+  return doc(db, 'tenants', tenantId, 'settings', 'store')
+}
 
-export async function getSettings() {
-  const snap = await getDoc(SETTINGS_DOC)
+export async function getSettings(tenantId) {
+  const snap = await getDoc(ref(tenantId))
   if (!snap.exists()) return null
   return snap.data()
 }
 
-export async function saveSettings(data) {
+export async function saveSettings(tenantId, data) {
   await setDoc(
-    SETTINGS_DOC,
+    ref(tenantId),
     { ...data, updatedAt: serverTimestamp() },
     { merge: true }
   )

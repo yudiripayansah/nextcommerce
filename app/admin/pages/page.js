@@ -4,29 +4,33 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import Button from '@/components/ui/Button'
 import RichTextEditor from '@/components/admin/RichTextEditor'
+import { useAuth } from '@/contexts/AuthContext'
 import { getPage, savePage } from '@/services/pages'
 import { PAGE_SLUGS, PAGE_TITLES } from '@/constants'
 import toast from 'react-hot-toast'
 
 export default function PagesPage() {
+  const { tenantId } = useAuth()
   const [active, setActive] = useState(PAGE_SLUGS[0])
   const [pages, setPages] = useState({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    Promise.all(PAGE_SLUGS.map((s) => getPage(s).then((d) => [s, d]))).then((results) => {
+    if (!tenantId) return
+    Promise.all(PAGE_SLUGS.map((s) => getPage(tenantId, s).then((d) => [s, d]))).then((results) => {
       const map = {}
       results.forEach(([slug, data]) => {
         map[slug] = { title: PAGE_TITLES[slug], content: '', ...data }
       })
       setPages(map)
     })
-  }, [])
+  }, [tenantId])
 
   async function handleSave() {
+    if (!tenantId) return
     setSaving(true)
     try {
-      await savePage(active, { title: pages[active]?.title, content: pages[active]?.content || '' })
+      await savePage(tenantId, active, { title: pages[active]?.title, content: pages[active]?.content || '' })
       toast.success('Halaman disimpan')
     } catch {
       toast.error('Gagal menyimpan')

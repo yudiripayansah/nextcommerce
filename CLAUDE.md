@@ -1,12 +1,16 @@
 # CLAUDE.md
 
-# Project: OnlineShop Generator
+# Project: NextCommerce — Online Store Generator
 
 ## Project Goal
 
-Build a simple Shopify-inspired online store generator for Indonesian SMEs.
+Multi-tenant SaaS platform to generate Shopify-inspired online stores for Indonesian SMEs.
 
-The application must be:
+Each tenant gets their own branded store at `/{slug}` with a full admin panel at `/admin`.
+
+The system is NOT a marketplace. Each store is a catalog + WhatsApp ordering system.
+
+Requirements:
 
 * Simple
 * Fast
@@ -15,10 +19,6 @@ The application must be:
 * Easy to maintain
 * Low Firestore cost
 * WhatsApp-based ordering
-
-The system is NOT an e-commerce marketplace.
-
-This is a catalog website with cart functionality that forwards orders to WhatsApp.
 
 ---
 
@@ -33,9 +33,9 @@ This is a catalog website with cart functionality that forwards orders to WhatsA
 
 ## Backend
 
-* Firebase Authentication (admin login + customer login)
-* Firestore
-* Cloudinary (image & media upload — NOT Firebase Storage)
+* Firebase Authentication — 3 separate instances (superadmin / admin / customer)
+* Firestore — multi-tenant data model
+* Cloudinary — image & media upload (NOT Firebase Storage)
 
 ## Hosting
 
@@ -62,54 +62,27 @@ NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=
 
 ## Use JavaScript Only
 
-DO NOT use TypeScript.
-
-Never generate:
-
-```ts
-interface Product
-type Product
-```
-
-Use JavaScript only.
+DO NOT use TypeScript. Never generate `interface`, `type`, or generic syntax.
 
 ---
 
 ## Keep Everything Simple
 
-This project targets SMEs.
+Avoid: complex architecture, over-engineering, unnecessary abstractions, enterprise patterns.
 
-Avoid:
-
-* Complex architecture
-* Over engineering
-* Unnecessary abstractions
-* Enterprise patterns
-
-Prefer:
-
-* Readable code
-* Small reusable components
-* Simple Firestore queries
+Prefer: readable code, small reusable components, simple Firestore queries.
 
 ---
 
 ## Mobile First
 
-All pages must be mobile friendly.
-
-Mobile experience is more important than desktop.
+All pages must be mobile friendly. Mobile experience is more important than desktop.
 
 ---
 
 ## SEO Friendly
 
-Frontend pages must support:
-
-* Metadata API
-* Dynamic title
-* Dynamic description
-* Open Graph tags
+Frontend pages must support Metadata API, dynamic title/description, Open Graph tags.
 
 ---
 
@@ -117,156 +90,88 @@ Frontend pages must support:
 
 Firebase client SDK does NOT work in Next.js Server Components.
 
-All store pages (`app/(store)/...`) MUST have `'use client'` at the top and load data via `useEffect`.
+All store pages (`app/[tenant]/...`) MUST have `'use client'` and load data via `useEffect`.
 
 ---
 
 ## Firestore Query Rules
 
-Avoid composite indexes.
+Avoid composite indexes. Use single `orderBy` then filter client-side.
 
-Use single `orderBy` then filter client-side.
-
-For `where()` queries without `orderBy`, sort by `createdAt.seconds` client-side after fetching.
+For `where()` without `orderBy`, sort by `createdAt.seconds` client-side after fetching.
 
 ---
 
-# Application Structure
+# Authentication Architecture
 
-## Public Store Routes
+Three completely independent Firebase Auth sessions (separate app instances in `lib/firebase.js`):
 
-```txt
-/
-```
+| Instance | Firebase App | Context | Firestore check | Portal |
+|---|---|---|---|---|
+| `auth` | `[DEFAULT]` | `SuperAdminContext` | `users/{uid}.role === 'superadmin'` | `/superadmin` |
+| `storeAuth` | `'store'` | `AuthContext` | `users/{uid}.role === 'admin'` | `/admin` |
+| `customerAuth` | `'customer'` | `CustomerAuthContext` | `tenants/{tid}/customers/{uid}` | `/{slug}/account` |
 
-Home Page
+All three can be active in the same browser simultaneously without conflict.
 
-```txt
-/collections
-```
+## Login Pages
 
-All Collections
-
-```txt
-/collections/[handle]
-```
-
-Collection Detail with product grid, breadcrumb, filter bar
-
-```txt
-/products/[handle]
-```
-
-Product Detail
-
-```txt
-/cart
-```
-
-Shopping Cart + WhatsApp order form
-
-```txt
-/about-us
-/contact-us
-/how-to-buy
-/faq
-```
-
-CMS-editable content pages
-
-```txt
-/account
-```
-
-Customer Account (profile)
-
-```txt
-/account/login
-```
-
-Customer Login
-
-```txt
-/account/register
-```
-
-Customer Register
-
-```txt
-/account/orders
-```
-
-Customer Order History
-
-```txt
-/account/addresses
-```
-
-Customer Saved Addresses
+| URL | Role | Context used |
+|---|---|---|
+| `/login` | Superadmin | `useSuperAdmin()` |
+| `/admin/login` | Admin toko | `useAuth()` |
+| `/{slug}/account/login` | Customer | `useCustomerAuth()` |
 
 ---
 
-## Admin Routes (Protected)
+# Application Routes
+
+## Superadmin (`/login` → `/superadmin`)
 
 ```txt
-/admin
+/login             — Superadmin login
+/superadmin        — Tenant management dashboard
 ```
 
-Dashboard with analytics
+## Admin Toko (`/admin/login` → `/admin`)
 
 ```txt
+/admin/login       — Admin toko login
+/admin             — Dashboard (analytics)
 /admin/orders
 /admin/orders/[id]
-```
-
-Orders list + detail
-
-```txt
 /admin/products
 /admin/products/new
 /admin/products/[id]
-```
-
-Products CRUD
-
-```txt
 /admin/collections
 /admin/collections/new
 /admin/collections/[id]
-```
-
-Collections CRUD
-
-```txt
 /admin/customers
 /admin/customers/[id]
+/admin/pages       — CMS pages editor
+/admin/files       — Cloudinary media library
+/admin/theme       — Theme customizer
+/admin/settings    — Store settings
 ```
 
-Customer list + detail
+## Store Publik (`/{slug}/...`)
 
 ```txt
-/admin/pages
+/{slug}                    — Home
+/{slug}/collections        — All collections
+/{slug}/collections/[handle]
+/{slug}/products/[handle]
+/{slug}/cart
+/{slug}/about-us
+/{slug}/contact-us
+/{slug}/how-to-buy
+/{slug}/faq
+/{slug}/account            — Customer profile
+/{slug}/account/login
+/{slug}/account/register
+/{slug}/account/orders
+/{slug}/account/addresses
 ```
-
-CMS page editor (about-us, contact-us, how-to-buy, faq)
-
-```txt
-/admin/files
-```
-
-Media library (Cloudinary uploads)
-
-```txt
-/admin/theme
-```
-
-Theme customizer (color presets + CSS variables)
-
-```txt
-/admin/settings
-```
-
-Store settings
 
 ---
 
@@ -274,19 +179,20 @@ Store settings
 
 ```txt
 app/
-├── (store)/
-│   ├── layout.js            — SettingsProvider > CustomerAuthProvider > ThemeProvider > Header/Footer
+├── [tenant]/
+│   ├── layout.js            — TenantLayout (async, reads slug param)
+│   ├── TenantStoreShell.js  — TenantProvider > CartProvider > SettingsProvider > CustomerAuthProvider > ThemeProvider > Header/Footer
 │   ├── page.js              — Home
 │   ├── collections/
-│   │   ├── page.js          — All collections
-│   │   └── [handle]/page.js — Collection detail + product grid
+│   │   ├── page.js
+│   │   └── [handle]/page.js
 │   ├── products/
 │   │   └── [handle]/
 │   │       ├── page.js
 │   │       └── ProductDetailClient.js
 │   ├── cart/page.js
 │   ├── account/
-│   │   ├── page.js          — Profile
+│   │   ├── page.js
 │   │   ├── login/page.js
 │   │   ├── register/page.js
 │   │   ├── orders/page.js
@@ -296,6 +202,7 @@ app/
 │   ├── how-to-buy/page.js
 │   └── faq/page.js
 ├── admin/
+│   ├── login/page.js        — Admin toko login (standalone, no AdminLayout)
 │   ├── page.js
 │   ├── orders/
 │   ├── products/
@@ -305,9 +212,11 @@ app/
 │   ├── files/page.js
 │   ├── theme/page.js
 │   └── settings/page.js
-├── login/page.js            — Admin login
-├── layout.js                — Root: AuthProvider > CartProvider > Toaster
-└── globals.css              — Tailwind v4 import + Google Fonts (Inter + Playfair Display)
+├── superadmin/
+│   └── page.js              — Tenant list + create tenant
+├── login/page.js            — Superadmin login
+├── layout.js                — Root: SuperAdminProvider > AuthProvider > Toaster
+└── globals.css
 
 components/
 ├── ui/
@@ -330,7 +239,7 @@ components/
 │   ├── WhatsAppOrderButton.js
 │   └── FaviconSync.js
 └── admin/
-    ├── AdminLayout.js
+    ├── AdminLayout.js       — Protects /admin, redirects to /admin/login
     ├── Sidebar.js
     ├── DashboardCard.js
     ├── DataTable.js
@@ -350,119 +259,165 @@ components/
         └── CustomerCard.js
 
 lib/
-├── firebase.js              — Firebase app init (client SDK)
+├── firebase.js              — 3 Firebase app instances: auth (superadmin), storeAuth (admin), customerAuth (customer)
 ├── firestore.js             — Firestore re-exports
 ├── helpers.js               — slugify, formatCurrency, formatDate, generateOrderNumber, generateVariantCombinations, buildWhatsAppMessage
 ├── cloudinary.js            — uploadImage() via Cloudinary REST API
 └── theme.js                 — THEME_PRESETS, DEFAULT_THEME, applyThemeVars()
 
 services/
-├── products.js              — getProducts, getProductByHandle, getProductById, getProductsByCollection, searchProducts, createProduct, updateProduct, deleteProduct
-├── collections.js           — getCollections, getCollectionByHandle, getCollectionById, createCollection, updateCollection, deleteCollection
-├── orders.js                — getOrders, getOrderById, createOrder, updateOrderStatus, getOrdersByCustomer
-├── customers.js             — getCustomers, getCustomerById, upsertCustomer, updateCustomer
-├── settings.js              — getSettings, saveSettings
-├── pages.js                 — getPage, savePage
-├── addresses.js             — getAddresses, getDefaultAddress, addAddress, updateAddress, deleteAddress
-└── files.js                 — getFiles, addFile, deleteFile
+├── products.js              — CRUD scoped to tenant path
+├── collections.js           — CRUD scoped to tenant path
+├── orders.js                — CRUD scoped to tenant path
+├── customers.js             — CRUD scoped to tenant path
+├── settings.js              — getSettings, saveSettings (tenant-scoped)
+├── pages.js                 — getPage, savePage (tenant-scoped)
+├── addresses.js             — getAddresses, addAddress, updateAddress, deleteAddress (tenant-scoped)
+├── files.js                 — getFiles, addFile, deleteFile (tenant-scoped)
+├── tenants.js               — getTenants, getTenantBySlug (superadmin)
+└── users.js                 — admin user management
 
 contexts/
-├── AuthContext.js           — Admin Firebase Auth (useAuth hook)
-├── CustomerAuthContext.js   — Customer Firebase Auth + Firestore profile (useCustomerAuth hook)
-├── SettingsContext.js       — Store settings via useEffect (useSettings hook)
+├── SuperAdminContext.js     — Firebase auth (primary), superadmin only (useSuperAdmin hook)
+├── AuthContext.js           — Firebase storeAuth (secondary), admin toko only (useAuth hook)
+├── CustomerAuthContext.js   — Firebase customerAuth (tertiary), customer only (useCustomerAuth hook)
+├── TenantContext.js         — Tenant data (slug → tenantId + settings) (useTenant hook)
+├── SettingsContext.js       — Store settings from Firestore (useSettings hook)
 └── ThemeContext.js          — CSS variable theme (useTheme hook)
 
 store/
-└── cartStore.js             — Cart reducer + CartProvider + useCart hook (localStorage persistence)
+└── cartStore.js             — Cart reducer + CartProvider + useCart (localStorage, keyed by slug)
 
 constants/
-└── index.js                 — ORDER_STATUSES, PRODUCT_STATUSES, COLLECTION_STATUSES, ADMIN_NAV, PAGE_SLUGS, PAGE_TITLES, ITEMS_PER_PAGE
+└── index.js                 — ORDER_STATUSES, PRODUCT_STATUSES, COLLECTION_STATUSES, ADMIN_NAV, PAGE_SLUGS, ITEMS_PER_PAGE
+```
 
-scripts/
-├── seed.js                  — Seeds all demo data (settings, collections, products, customers, orders, pages)
-└── seed-products.js         — Supplementary product seeder
+---
+
+# Multi-Tenant Data Model
+
+All store data lives under `tenants/{tenantId}/` subcollections.
+
+```txt
+tenants/{tenantId}/
+├── settings        (singleton doc: store)
+├── collections/
+├── products/
+├── orders/
+├── customers/
+├── addresses/
+├── pages/
+└── files/
+```
+
+Top-level collections (not tenant-scoped):
+
+```txt
+users/              — admin + superadmin accounts (role field)
+tenants/            — tenant metadata (slug, name, plan, status)
 ```
 
 ---
 
 # Data Structures
 
-## Settings
-
-Document path: `settings/store`
+## Tenant
 
 ```js
+// tenants/{tenantId}
+{
+  name: "",
+  slug: "",           // URL path: /{slug}
+  plan: "free",       // free | pro | enterprise
+  status: "active",   // active | inactive | suspended
+  ownerName: "",
+  email: "",
+  whatsapp: "",
+  createdAt: null,
+  updatedAt: null
+}
+```
+
+## User (Admin / Superadmin)
+
+```js
+// users/{uid}
+{
+  name: "",
+  email: "",
+  role: "admin",      // admin | superadmin
+  tenantId: "",       // null for superadmin
+  createdAt: null
+}
+```
+
+## Settings
+
+```js
+// tenants/{tenantId}/settings/store
 {
   storeName: "",
-  logo: "",
-  favicon: "",
-  whatsappNumber: "",   // format: 628xxxxxxxxxx (no + or spaces)
+  logo: "",           // Cloudinary URL
+  favicon: "",        // Cloudinary URL
+  whatsappNumber: "", // format: 628xxxxxxxxxx
   email: "",
   phone: "",
   address: "",
   facebook: "",
   instagram: "",
   tiktok: "",
-  theme: {}             // color theme object (see Theme section)
+  theme: {
+    template: "urban-fashion",
+    primary: "#000000",
+    primaryFg: "#ffffff",
+    accent: "#374151",
+    bg: "#ffffff",
+    surface: "#f9fafb",
+    text: "#111827"
+  },
+  updatedAt: null
 }
 ```
-
----
 
 ## Collection
 
 ```js
+// tenants/{tenantId}/collections/{id}
 {
   id: "",
   title: "",
-  handle: "",           // slugified, url-safe
+  handle: "",
   description: "",
-  image: "",            // Cloudinary URL
-  status: "active",     // active | draft
+  image: "",          // Cloudinary URL
+  status: "active",   // active | draft
   productCount: 0,
   createdAt: null,
   updatedAt: null
 }
 ```
 
----
-
 ## Product
 
 ```js
+// tenants/{tenantId}/products/{id}
 {
   id: "",
   title: "",
-  handle: "",           // slugified, url-safe
+  handle: "",
   description: "",
-  featuredImage: "",    // Cloudinary URL
-  images: [],           // Cloudinary URLs
+  featuredImage: "",  // Cloudinary URL
+  images: [],
   tags: [],
   collectionId: "",
   collectionTitle: "",
-  options: [],          // max 3 options
+  options: [],        // max 3: [{ name, values }]
   variants: [],
-  status: "active",     // active | draft | archived
+  status: "active",   // active | draft | archived
   createdAt: null,
   updatedAt: null
 }
+// minPrice, maxPrice, totalStock computed client-side by normalize() in services/products.js
 ```
-
-Note: `minPrice`, `maxPrice`, `totalStock` are NOT stored in Firestore.
-They are computed client-side by `normalize()` inside `services/products.js`.
-
----
-
-## Product Option (max 3)
-
-```js
-{
-  name: "Color",        // e.g. Color, Size, Material
-  values: ["Black", "White"]
-}
-```
-
----
 
 ## Product Variant
 
@@ -473,24 +428,19 @@ They are computed client-side by `normalize()` inside `services/products.js`.
   sku: "",
   price: 0,
   stock: 0,
-  image: "",            // Cloudinary URL (optional, per-variant)
-  option1: "Black",
-  option2: "XL",
-  option3: ""
+  image: "",
+  option1: "", option2: "", option3: ""
 }
 ```
 
----
-
 ## Customer
 
-Document ID: Firebase Auth UID (registered) or auto-generated (guest from order)
-
 ```js
+// tenants/{tenantId}/customers/{uid}
 {
   id: "",
   name: "",
-  email: "",            // populated for registered customers
+  email: "",
   whatsapp: "",
   totalOrders: 0,
   totalSpent: 0,
@@ -500,14 +450,33 @@ Document ID: Firebase Auth UID (registered) or auto-generated (guest from order)
 }
 ```
 
----
+## Order
+
+```js
+// tenants/{tenantId}/orders/{id}
+{
+  id: "",
+  orderNumber: "",    // ORD-YYYYMMDD-XXXX
+  customerId: "",
+  customerName: "",
+  customerWhatsapp: "",
+  notes: "",
+  items: [{ productId, productTitle, variantTitle, price, quantity, subtotal }],
+  totalItems: 0,
+  totalAmount: 0,
+  status: "new",      // new | contacted | paid | shipped | completed | cancelled
+  createdAt: null,
+  updatedAt: null
+}
+```
 
 ## Address
 
 ```js
+// tenants/{tenantId}/addresses/{id}
 {
   id: "",
-  customerId: "",       // Firebase Auth UID
+  customerId: "",
   recipientName: "",
   phone: "",
   address: "",
@@ -520,68 +489,29 @@ Document ID: Firebase Auth UID (registered) or auto-generated (guest from order)
 }
 ```
 
----
-
-## Order
-
-```js
-{
-  id: "",
-  orderNumber: "",      // e.g. ORD-20240101-XXXX
-  customerId: "",
-  customerName: "",
-  customerWhatsapp: "",
-  notes: "",
-  items: [],
-  totalItems: 0,
-  totalAmount: 0,
-  status: "new",        // new | contacted | paid | shipped | completed | cancelled
-  createdAt: null,
-  updatedAt: null
-}
-```
-
----
-
-## Order Item
-
-```js
-{
-  productId: "",
-  productTitle: "",
-  variantTitle: "",
-  price: 0,
-  quantity: 0,
-  subtotal: 0
-}
-```
-
----
-
 ## Page (CMS)
 
-Document ID = slug (`about-us`, `contact-us`, `how-to-buy`, `faq`)
-
 ```js
+// tenants/{tenantId}/pages/{slug}
+// slug: about-us | contact-us | how-to-buy | faq
 {
   title: "",
-  content: "",          // HTML from rich text editor
+  content: "",        // HTML from rich text editor
   updatedAt: null
 }
 ```
-
----
 
 ## File (Media Library)
 
 ```js
+// tenants/{tenantId}/files/{id}
 {
   id: "",
-  url: "",              // Cloudinary secure_url
-  publicId: "",         // Cloudinary public_id
+  url: "",            // Cloudinary secure_url
+  publicId: "",       // Cloudinary public_id
   name: "",
-  size: 0,              // bytes
-  format: "",           // jpg, png, webp, etc.
+  size: 0,
+  format: "",
   width: 0,
   height: 0,
   createdAt: null
@@ -590,232 +520,107 @@ Document ID = slug (`about-us`, `contact-us`, `how-to-buy`, `faq`)
 
 ---
 
-# Theme System
-
-Two templates available, each with 5 color presets. Stored in `settings/store.theme`.
-
-## Templates
-
-### Urban Fashion Style
-Editorial, minimal, fashion-forward. Sharp edges, serif headings, full-bleed imagery.
-
-Components: `UrbanFashionHeader`, original `Footer`, `ProductCard`, `page.js`, `collections/*.js`
-
-Color presets: Classic Black, Ocean Blue, Rose Gold, Forest Sage, Sunset Warm
-
-### Happy Hobby
-Fun, colorful, playful. Rounded corners, bold colors, friendly feel for hobby & lifestyle shops.
-
-Components: `HappyHobbyHeader`, `HappyHobbyFooter`, `HappyHobbyProductCard`, `HappyHobbyHomePage`, `HappyHobbyCollectionsPage`, `HappyHobbyCollectionDetailPage`
-
-Color presets: Sunshine Orange, Fresh Mint, Sky Blue, Sweet Purple, Cherry Red
-
-## Settings format
-
-```js
-settings.theme = {
-  template: 'urban-fashion',  // or 'happy-hobby'
-  primary: '#000000',
-  primaryFg: '#ffffff',
-  accent: '#374151',
-  bg: '#ffffff',
-  surface: '#f9fafb',
-  text: '#111827',
-}
-```
-
-## CSS variables (colors)
-
-```css
---color-primary
---color-primary-fg
---color-accent
---color-bg
---color-surface
---color-text
-```
-
-## CSS variables (structural — set by template)
-
-```css
---tm-radius         /* card/container border-radius */
---tm-radius-sm      /* small elements */
---tm-radius-lg      /* large containers */
---tm-radius-pill    /* buttons, badges (9999px for Happy Hobby) */
---tm-card-shadow    /* card shadow (none for Urban Fashion) */
---tm-card-hover-shadow
-```
-
-`[data-template="happy-hobby"]` sets non-zero values for these.
-
-## Template switching mechanism
-
-1. `applyTemplate(id)` sets `data-template` on `<html>`
-2. CSS variables respond to `[data-template="happy-hobby"]` selector
-3. React components call `useTheme().template` to switch between layout trees
-4. `app/layout.js` inline script reads `localStorage['store_theme'].template` on page load to prevent flash
-
-## Theme switching in components
-
-```js
-// Header.js, Footer.js, ProductCard.js
-const { template } = useTheme() || {}
-if (template === 'happy-hobby') return <HappyHobbyVersion />
-return <UrbanFashionVersion />
-```
-
-## Admin theme page (`/admin/theme`)
-
-Three-step UI:
-1. Choose template (visual card with mockup preview)
-2. Choose color preset (for that template's presets)
-3. Customize individual colors (color picker)
-4. Live preview showing layout + chosen colors
-5. Save → writes `settings.theme` to Firestore + localStorage
-
-Theme is cached in `localStorage` and applied via inline `<script>` in `app/layout.js` to prevent flash on load.
-
----
-
 # Provider / Context Tree
 
 ```txt
 Root Layout (app/layout.js)
-└── AuthProvider          — Admin Firebase Auth
-    └── CartProvider      — Cart state (localStorage persistence)
-        └── Toaster       — react-hot-toast
+└── SuperAdminProvider   — primary auth (superadmin)
+    └── AuthProvider     — storeAuth (admin toko)
+        └── Toaster
 
-Store Layout (app/(store)/layout.js)
-└── SettingsProvider      — Fetches settings/store from Firestore once
-    └── CustomerAuthProvider — Customer Firebase Auth + Firestore profile
-        └── ThemeProvider — Applies CSS variables from settings.theme
-            └── FaviconSync — Updates browser favicon from settings.favicon
-                └── Header / main / Footer
+Store Shell (app/[tenant]/TenantStoreShell.js)
+└── TenantProvider        — resolves slug → tenantId
+    └── CartProvider      — cart state (localStorage, keyed by slug)
+        └── SettingsProvider   — fetches tenants/{tid}/settings/store
+            └── CustomerAuthProvider (tenantId)  — customerAuth
+                └── ThemeProvider   — applies CSS variables
+                    └── FaviconSync
+                        └── Header / main / Footer
 ```
+
+---
+
+# Theme System
+
+Two templates, each with 5 color presets. Stored in tenant settings doc.
+
+## Templates
+
+**Urban Fashion** — editorial, minimal, sharp edges, serif headings.
+Components: `UrbanFashionHeader`, `Footer`, `ProductCard`
+
+**Happy Hobby** — fun, colorful, rounded, playful.
+Components: `HappyHobbyHeader`, `HappyHobbyFooter`, `HappyHobbyProductCard`
+
+## CSS Variables
+
+```css
+--color-primary / --color-primary-fg / --color-accent
+--color-bg / --color-surface / --color-text
+--tm-radius / --tm-radius-sm / --tm-radius-lg / --tm-radius-pill
+--tm-card-shadow / --tm-card-hover-shadow
+```
+
+Theme is cached per-slug in `localStorage['store_theme_{slug}']` and applied via inline `<script>` in `app/layout.js` before React hydrates (prevents flash).
 
 ---
 
 # WhatsApp Ordering System
 
-There is NO checkout system.
-
-There is NO payment gateway.
-
-There is NO shipping integration.
-
-Order flow:
+No checkout. No payment gateway. No shipping.
 
 ```txt
-Product
-↓
-Add To Cart
-↓
-Cart
-↓
-Fill Name + WhatsApp
-↓
-Create Order (Firestore)
-↓
-Upsert Customer (Firestore)
-↓
-Redirect To WhatsApp
-```
-
-WhatsApp message format:
-
-```txt
-Halo, saya ingin memesan produk berikut:
-
-{PRODUCTS}
-
-Total Item: {TOTAL_ITEMS}
-
-Nama:
-Alamat:
-
-Terima kasih.
-```
-
-WhatsApp URL:
-
-```js
-`https://wa.me/${number}?text=${encodeURIComponent(message)}`
+Product → Add To Cart → Cart → Fill Name+WhatsApp → Create Order (Firestore) → Upsert Customer → Redirect to wa.me
 ```
 
 ---
 
 # Image Upload (Cloudinary)
 
-All image uploads use Cloudinary, NOT Firebase Storage.
+All uploads via `lib/cloudinary.js → uploadImage(file, folder)`.
 
-Upload via `lib/cloudinary.js`:
+Returns `{ url, publicId, name, size, format, width, height }`.
 
-```js
-uploadImage(file, folder = 'media')
-// returns { url, publicId, name, size, format, width, height }
-```
-
-After upload, save file record to Firestore `files` collection via `services/files.js`.
-
-MediaPicker component (`components/admin/MediaPicker.js`) provides reusable file browsing and upload UI for all admin forms.
+After upload, save record to `tenants/{tenantId}/files` via `services/files.js`.
 
 ---
 
-# Store UI Style
+# Superadmin Panel
 
-Reference design: editorial fashion minimal (my.therestyletrait.com)
+URL: `/superadmin` (protected by `SuperAdminContext`)
 
-Key design decisions:
-
-* Fonts: Inter (body) + Playfair Display (serif headings) via CSS `@import` in `globals.css`
-* Hero: 85vh full-bleed image with dark overlay, serif heading
-* Collection grid: 4-column, `aspect-[3/4]` portrait, `bg-stone-100`, no gap between cells
-* Product cards: hover scale, "Habis" sold-out badge, uppercase collection label
-* Collection/product list pages: breadcrumb → uppercase h1 → divider → filter bar → grid
-* Filter bar: "Filter & Sort" icon (left), in-stock checkbox (right)
-* Announcement bar: black strip above header
+Features:
+* View all tenants (name, slug, plan, status, created date)
+* Create new tenant (triggers `/api/create-tenant` which creates Firebase Auth user + Firestore user doc + tenant doc)
+* Stats: total stores, active stores, pro plan count
 
 ---
 
 # Admin Features Summary
 
-| Module    | Features                                                                  |
-|-----------|---------------------------------------------------------------------------|
-| Dashboard | Revenue, Orders, Products, Customers KPIs + charts + top products         |
-| Products  | CRUD, Cloudinary image upload, variant generator, collection assign, search|
-| Collections | CRUD, Cloudinary image upload                                           |
-| Orders    | List, detail, status update (6 statuses), search, filter                  |
-| Customers | List, detail, order history                                               |
-| Pages     | Rich text editor for 4 CMS pages                                          |
-| Files     | Cloudinary media library (upload, browse, delete)                         |
-| Theme     | Color preset picker + live preview                                        |
-| Settings  | Store info, logo, favicon, WhatsApp number, social links                  |
+| Module | Features |
+|---|---|
+| Dashboard | Revenue, Orders, Products, Customers KPIs + top products |
+| Products | CRUD, Cloudinary images, variant generator, collection assign, search |
+| Collections | CRUD, Cloudinary image |
+| Orders | List, detail, 6-status update, search, filter |
+| Customers | List, detail, order history |
+| Pages | Rich text editor for 4 CMS pages |
+| Files | Cloudinary media library (upload, browse, delete) |
+| Theme | Template picker + color presets + live preview |
+| Settings | Store info, logo, favicon, WhatsApp, social links |
 
 ---
 
 # Performance Rules
 
-Minimize Firestore reads.
-
-Use:
-
-* Pagination
-* Query limits (`pageLimit` param on `getProducts`)
-* Client-side filtering instead of composite index queries
-
-Never load entire collections unnecessarily.
+* Minimize Firestore reads
+* Paginate lists, use query limits
+* Client-side filter to avoid composite indexes
+* Never load entire collections unnecessarily
 
 ---
 
 # Out Of Scope
 
-Do NOT implement:
-
-* Payment Gateway
-* Checkout / Shipping Integration
-* Wishlist / Reviews / Blog
-* Multi Vendor / Multi Store
-* Multi Language
-* Affiliate / Subscription System
-
-Only implement features explicitly described in this document.
+Do NOT implement: Payment Gateway, Checkout, Shipping, Wishlist, Reviews, Blog, Multi-Vendor, Multi-Language, Affiliate, Subscription.

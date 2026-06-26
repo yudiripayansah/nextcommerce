@@ -7,6 +7,7 @@ import DataTable from '@/components/admin/DataTable'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
+import { useAuth } from '@/contexts/AuthContext'
 import { getCollections, deleteCollection } from '@/services/collections'
 import { formatDate } from '@/lib/helpers'
 import toast from 'react-hot-toast'
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast'
 const PAGE_SIZES = [10, 20, 50, 100]
 
 export default function CollectionsPage() {
+  const { tenantId } = useAuth()
   const [collections, setCollections] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -25,16 +27,17 @@ export default function CollectionsPage() {
   const [deleting, setDeleting] = useState(false)
 
   async function load() {
+    if (!tenantId) return
     setLoading(true)
     try {
-      const data = await getCollections()
+      const data = await getCollections(tenantId)
       setCollections(data)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [tenantId])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return collections
@@ -77,7 +80,7 @@ export default function CollectionsPage() {
   async function handleDelete() {
     setDeleting(true)
     try {
-      await deleteCollection(deleteId)
+      await deleteCollection(tenantId, deleteId)
       toast.success('Koleksi dihapus')
       setDeleteId(null)
       load()
@@ -91,7 +94,7 @@ export default function CollectionsPage() {
   async function handleBulkDelete() {
     setDeleting(true)
     try {
-      await Promise.all([...selectedIds].map(id => deleteCollection(id)))
+      await Promise.all([...selectedIds].map(id => deleteCollection(tenantId, id)))
       toast.success(`${selectedIds.size} koleksi dihapus`)
       setSelectedIds(new Set())
       setShowBulkConfirm(false)

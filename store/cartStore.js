@@ -4,8 +4,6 @@ import { createContext, useContext, useReducer, useEffect } from 'react'
 
 const CartContext = createContext(null)
 
-const STORAGE_KEY = 'nc_cart'
-
 function cartReducer(state, action) {
   switch (action.type) {
     case 'ADD_ITEM': {
@@ -71,19 +69,19 @@ function cartReducer(state, action) {
   }
 }
 
-export function CartProvider({ children }) {
+export function CartProvider({ storageKey = 'nc_cart', children }) {
   const [cart, dispatch] = useReducer(cartReducer, { items: [] })
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY)
+      const saved = localStorage.getItem(storageKey)
       if (saved) dispatch({ type: 'HYDRATE', payload: JSON.parse(saved) })
     } catch {}
-  }, [])
+  }, [storageKey])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart))
-  }, [cart])
+    localStorage.setItem(storageKey, JSON.stringify(cart))
+  }, [cart, storageKey])
 
   const totalItems = cart.items.reduce((acc, i) => acc + i.quantity, 0)
   const totalAmount = cart.items.reduce((acc, i) => acc + i.subtotal, 0)

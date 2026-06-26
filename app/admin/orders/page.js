@@ -7,6 +7,7 @@ import DataTable from '@/components/admin/DataTable'
 import OrderStatusBadge from '@/components/admin/orders/OrderStatusBadge'
 import Select from '@/components/ui/Select'
 import Pagination from '@/components/ui/Pagination'
+import { useAuth } from '@/contexts/AuthContext'
 import { getOrders } from '@/services/orders'
 import { formatCurrency, formatDate } from '@/lib/helpers'
 import { ORDER_STATUSES } from '@/constants'
@@ -15,6 +16,7 @@ const PAGE_SIZES = [10, 20, 50, 100]
 const statusOptions = [{ value: '', label: 'Semua Status' }, ...ORDER_STATUSES]
 
 export default function OrdersPage() {
+  const { tenantId } = useAuth()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
@@ -23,16 +25,17 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1)
 
   async function load(s) {
+    if (!tenantId) return
     setLoading(true)
     try {
-      const data = await getOrders({ status: s || undefined, pageLimit: 500 })
+      const data = await getOrders(tenantId, { status: s || undefined, pageLimit: 500 })
       setOrders(data)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load(status) }, [status])
+  useEffect(() => { load(status) }, [status, tenantId])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return orders

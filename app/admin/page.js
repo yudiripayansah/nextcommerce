@@ -3,21 +3,25 @@
 import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import DashboardCard from '@/components/admin/DashboardCard'
-import { getDocs, query, collection, where, orderBy, limit, db } from '@/lib/firestore'
+import { useAuth } from '@/contexts/AuthContext'
+import { getDocs, query, collection, orderBy, limit, db } from '@/lib/firestore'
 import { formatCurrency } from '@/lib/helpers'
 
 export default function DashboardPage() {
+  const { tenantId } = useAuth()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [recentOrders, setRecentOrders] = useState([])
 
   useEffect(() => {
+    if (!tenantId) return
     async function load() {
       try {
+        const base = `tenants/${tenantId}`
         const [ordersSnap, productsSnap, customersSnap] = await Promise.all([
-          getDocs(collection(db, 'orders')),
-          getDocs(collection(db, 'products')),
-          getDocs(collection(db, 'customers')),
+          getDocs(collection(db, base, 'orders')),
+          getDocs(collection(db, base, 'products')),
+          getDocs(collection(db, base, 'customers')),
         ])
 
         const orders = ordersSnap.docs.map((d) => d.data())
@@ -53,7 +57,7 @@ export default function DashboardPage() {
           totalCustomers: customersSnap.size,
         })
 
-        const recentQ = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(5))
+        const recentQ = query(collection(db, base, 'orders'), orderBy('createdAt', 'desc'), limit(5))
         const recentSnap = await getDocs(recentQ)
         setRecentOrders(recentSnap.docs.map((d) => ({ id: d.id, ...d.data() })))
       } catch (e) {
@@ -63,7 +67,7 @@ export default function DashboardPage() {
       }
     }
     load()
-  }, [])
+  }, [tenantId])
 
   return (
     <AdminLayout title="Dashboard">

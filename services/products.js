@@ -14,7 +14,13 @@ import {
   serverTimestamp,
 } from '@/lib/firestore'
 
-const COL = collection(db, 'products')
+function col(tenantId) {
+  return collection(db, 'tenants', tenantId, 'products')
+}
+
+function ref(tenantId, id) {
+  return doc(db, 'tenants', tenantId, 'products', id)
+}
 
 function normalize(product) {
   const variants = product.variants || []
@@ -28,9 +34,8 @@ function normalize(product) {
   }
 }
 
-export async function getProducts({ status, collectionId, pageLimit = 10 } = {}) {
-  // Fetch with single orderBy to avoid composite index
-  const q = query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
+export async function getProducts(tenantId, { status, collectionId, pageLimit = 10 } = {}) {
+  const q = query(col(tenantId), orderBy('createdAt', 'desc'), limit(pageLimit))
   const snap = await getDocs(q)
   let results = snap.docs.map((d) => normalize({ id: d.id, ...d.data() }))
   if (status) results = results.filter((p) => p.status === status)
@@ -38,42 +43,42 @@ export async function getProducts({ status, collectionId, pageLimit = 10 } = {})
   return results
 }
 
-export async function getProductByHandle(handle) {
-  const q = query(COL, where('handle', '==', handle))
+export async function getProductByHandle(tenantId, handle) {
+  const q = query(col(tenantId), where('handle', '==', handle))
   const snap = await getDocs(q)
   if (snap.empty) return null
   const d = snap.docs[0]
   return normalize({ id: d.id, ...d.data() })
 }
 
-export async function getProductById(id) {
-  const snap = await getDoc(doc(db, 'products', id))
+export async function getProductById(tenantId, id) {
+  const snap = await getDoc(ref(tenantId, id))
   if (!snap.exists()) return null
   return normalize({ id: snap.id, ...snap.data() })
 }
 
-export async function createProduct(data) {
-  const ref = await addDoc(COL, {
+export async function createProduct(tenantId, data) {
+  const r = await addDoc(col(tenantId), {
     ...data,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
-  return ref.id
+  return r.id
 }
 
-export async function updateProduct(id, data) {
-  await updateDoc(doc(db, 'products', id), {
+export async function updateProduct(tenantId, id, data) {
+  await updateDoc(ref(tenantId, id), {
     ...data,
     updatedAt: serverTimestamp(),
   })
 }
 
-export async function deleteProduct(id) {
-  await deleteDoc(doc(db, 'products', id))
+export async function deleteProduct(tenantId, id) {
+  await deleteDoc(ref(tenantId, id))
 }
 
-export async function searchProducts(queryStr) {
-  const q = query(COL, where('status', '==', 'active'), limit(200))
+export async function searchProducts(tenantId, queryStr) {
+  const q = query(col(tenantId), where('status', '==', 'active'), limit(200))
   const snap = await getDocs(q)
   const term = queryStr.toLowerCase().trim()
   return snap.docs
@@ -86,8 +91,8 @@ export async function searchProducts(queryStr) {
     })
 }
 
-export async function getProductsByCollection(collectionId) {
-  const q = query(COL, where('collectionId', '==', collectionId))
+export async function getProductsByCollection(tenantId, collectionId) {
+  const q = query(col(tenantId), where('collectionId', '==', collectionId))
   const snap = await getDocs(q)
   return snap.docs
     .map((d) => normalize({ id: d.id, ...d.data() }))

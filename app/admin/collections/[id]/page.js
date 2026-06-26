@@ -5,24 +5,27 @@ import { useRouter, useParams } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import CollectionForm from '@/components/admin/collections/CollectionForm'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/contexts/AuthContext'
 import { getCollectionById, updateCollection } from '@/services/collections'
 import toast from 'react-hot-toast'
 
 export default function EditCollectionPage() {
   const { id } = useParams()
+  const { tenantId } = useAuth()
   const router = useRouter()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    getCollectionById(id).then(setData).finally(() => setLoading(false))
-  }, [id])
+    if (!tenantId) return
+    getCollectionById(tenantId, id).then(setData).finally(() => setLoading(false))
+  }, [tenantId, id])
 
   async function handleSubmit(form) {
     setSaving(true)
     try {
-      await updateCollection(id, form)
+      await updateCollection(tenantId, id, form)
       toast.success('Koleksi berhasil disimpan')
       router.push('/admin/collections')
     } catch {

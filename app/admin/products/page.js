@@ -7,6 +7,7 @@ import DataTable from '@/components/admin/DataTable'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import Pagination from '@/components/ui/Pagination'
+import { useAuth } from '@/contexts/AuthContext'
 import { getProducts, deleteProduct } from '@/services/products'
 import { formatCurrency, formatDate } from '@/lib/helpers'
 import toast from 'react-hot-toast'
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast'
 const PAGE_SIZES = [10, 20, 50, 100]
 
 export default function ProductsPage() {
+  const { tenantId } = useAuth()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -25,16 +27,17 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState(false)
 
   async function load() {
+    if (!tenantId) return
     setLoading(true)
     try {
-      const data = await getProducts({ pageLimit: 500 })
+      const data = await getProducts(tenantId, { pageLimit: 500 })
       setProducts(data)
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [tenantId])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return products
@@ -77,7 +80,7 @@ export default function ProductsPage() {
   async function handleDelete() {
     setDeleting(true)
     try {
-      await deleteProduct(deleteId)
+      await deleteProduct(tenantId, deleteId)
       toast.success('Produk dihapus')
       setDeleteId(null)
       load()
@@ -91,7 +94,7 @@ export default function ProductsPage() {
   async function handleBulkDelete() {
     setDeleting(true)
     try {
-      await Promise.all([...selectedIds].map(id => deleteProduct(id)))
+      await Promise.all([...selectedIds].map(id => deleteProduct(tenantId, id)))
       toast.success(`${selectedIds.size} produk dihapus`)
       setSelectedIds(new Set())
       setShowBulkConfirm(false)

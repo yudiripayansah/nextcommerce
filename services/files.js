@@ -11,19 +11,25 @@ import {
   serverTimestamp,
 } from '@/lib/firestore'
 
-const COL = collection(db, 'files')
+function col(tenantId) {
+  return collection(db, 'tenants', tenantId, 'files')
+}
 
-export async function getFiles({ pageLimit = 200 } = {}) {
-  const q = query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
+function ref(tenantId, id) {
+  return doc(db, 'tenants', tenantId, 'files', id)
+}
+
+export async function getFiles(tenantId, { pageLimit = 200 } = {}) {
+  const q = query(col(tenantId), orderBy('createdAt', 'desc'), limit(pageLimit))
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
-export async function addFile(data) {
-  const ref = await addDoc(COL, { ...data, createdAt: serverTimestamp() })
-  return ref.id
+export async function addFile(tenantId, data) {
+  const r = await addDoc(col(tenantId), { ...data, createdAt: serverTimestamp() })
+  return r.id
 }
 
-export async function deleteFile(id) {
-  await deleteDoc(doc(db, 'files', id))
+export async function deleteFile(tenantId, id) {
+  await deleteDoc(ref(tenantId, id))
 }

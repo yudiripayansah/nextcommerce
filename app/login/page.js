@@ -2,15 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import Button from '@/components/ui/Button'
+import { useSuperAdmin } from '@/contexts/SuperAdminContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login } = useSuperAdmin()
   const router = useRouter()
 
   async function handleSubmit(e) {
@@ -19,10 +18,10 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await login(email, password)
-      router.replace('/admin')
+      router.replace('/superadmin')
     } catch (err) {
-      if (err?.message === 'CUSTOMER_ACCOUNT') {
-        setError('Akun ini adalah akun pelanggan. Gunakan halaman login toko.')
+      if (err?.message === 'NOT_SUPERADMIN') {
+        setError('Akun ini bukan akun superadmin.')
       } else {
         setError('Email atau password salah.')
       }
@@ -35,8 +34,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-          <p className="text-sm text-gray-500 mt-1">Masuk ke panel admin</p>
+          <h1 className="text-2xl font-bold text-gray-900">Superadmin</h1>
+          <p className="text-sm text-gray-500 mt-1">360&5 NextCommerce</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -48,8 +47,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="admin@example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                placeholder="superadmin@email.com"
               />
             </div>
             <div>
@@ -59,7 +58,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="••••••••"
               />
             </div>
@@ -68,11 +67,20 @@ export default function LoginPage() {
               <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
             )}
 
-            <Button type="submit" loading={loading} className="w-full" size="lg">
-              Masuk
-            </Button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-900 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-black disabled:opacity-50 transition-colors"
+            >
+              {loading ? 'Memproses...' : 'Masuk'}
+            </button>
           </form>
         </div>
+
+        <p className="text-center text-xs text-gray-400 mt-6">
+          Admin toko?{' '}
+          <a href="/admin/login" className="text-gray-600 hover:underline">Login di sini</a>
+        </p>
       </div>
     </div>
   )

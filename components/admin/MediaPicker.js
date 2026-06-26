@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { uploadImage } from '@/lib/cloudinary'
+import { useAuth } from '@/contexts/AuthContext'
 import { getFiles, addFile, deleteFile } from '@/services/files'
 
 function formatSize(bytes) {
@@ -11,6 +12,7 @@ function formatSize(bytes) {
 }
 
 export default function MediaPicker({ open, onClose, onSelect, multiple = false, initialSelected = [] }) {
+  const { tenantId } = useAuth()
   const [files, setFiles] = useState([])
   const [selected, setSelected] = useState([])
   const [loading, setLoading] = useState(false)
@@ -32,9 +34,10 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
   }, [open])
 
   async function load() {
+    if (!tenantId) return
     setLoading(true)
     try {
-      const data = await getFiles()
+      const data = await getFiles(tenantId)
       setFiles(data)
     } finally {
       setLoading(false)
@@ -42,6 +45,7 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
   }
 
   async function handleUpload(fileList) {
+    if (!tenantId) return
     const toUpload = Array.from(fileList).filter((f) => f.type.startsWith('image/'))
     if (!toUpload.length) return
     setUploading(true)
@@ -50,7 +54,7 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
     const newUrls = []
     for (let i = 0; i < toUpload.length; i++) {
       const result = await uploadImage(toUpload[i], 'media')
-      const id = await addFile({
+      const id = await addFile(tenantId, {
         url: result.url,
         publicId: result.publicId,
         name: result.name,
@@ -87,7 +91,7 @@ export default function MediaPicker({ open, onClose, onSelect, multiple = false,
   }
 
   async function handleDelete(file) {
-    await deleteFile(file.id)
+    await deleteFile(tenantId, file.id)
     setFiles((prev) => prev.filter((f) => f.id !== file.id))
     setSelected((prev) => prev.filter((u) => u !== file.url))
     setConfirmDelete(null)

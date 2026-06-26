@@ -5,12 +5,14 @@ import Link from 'next/link'
 import AdminLayout from '@/components/admin/AdminLayout'
 import DataTable from '@/components/admin/DataTable'
 import Pagination from '@/components/ui/Pagination'
+import { useAuth } from '@/contexts/AuthContext'
 import { getCustomers } from '@/services/customers'
 import { formatCurrency, formatDate } from '@/lib/helpers'
 
 const PAGE_SIZES = [10, 20, 50, 100]
 
 export default function CustomersPage() {
+  const { tenantId } = useAuth()
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -18,8 +20,9 @@ export default function CustomersPage() {
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    getCustomers().then(setCustomers).finally(() => setLoading(false))
-  }, [])
+    if (!tenantId) return
+    getCustomers(tenantId).then(setCustomers).finally(() => setLoading(false))
+  }, [tenantId])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return customers

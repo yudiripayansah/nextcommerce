@@ -6,15 +6,15 @@ import {
   serverTimestamp,
 } from '@/lib/firestore'
 
-export async function getPage(slug) {
-  const snap = await getDoc(doc(db, 'pages', slug))
+export async function getPage(tenantId, slug) {
+  const snap = await getDoc(doc(db, 'tenants', tenantId, 'pages', slug))
   if (!snap.exists()) return null
   return snap.data()
 }
 
-export async function savePage(slug, data) {
+export async function savePage(tenantId, slug, data) {
   await setDoc(
-    doc(db, 'pages', slug),
+    doc(db, 'tenants', tenantId, 'pages', slug),
     { ...data, updatedAt: serverTimestamp() },
     { merge: true }
   )

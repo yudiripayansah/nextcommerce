@@ -4,17 +4,20 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import CollectionForm from '@/components/admin/collections/CollectionForm'
+import { useAuth } from '@/contexts/AuthContext'
 import { createCollection } from '@/services/collections'
 import toast from 'react-hot-toast'
 
 export default function NewCollectionPage() {
+  const { tenantId } = useAuth()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   async function handleSubmit(data) {
+    if (!tenantId) return
     setLoading(true)
     try {
-      await createCollection(data)
+      await createCollection(tenantId, data)
       toast.success('Koleksi berhasil dibuat')
       router.push('/admin/collections')
     } catch {

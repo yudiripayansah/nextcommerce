@@ -1,5 +1,5 @@
-// node scripts/seed.js
-// Jalankan: node scripts/seed.js
+// Seed data demo ke tenant tertentu
+// Jalankan: TENANT_ID=xxx node scripts/seed.js
 
 const { initializeApp } = require('firebase/app')
 const { getFirestore, collection, doc, setDoc, addDoc, serverTimestamp, Timestamp } = require('firebase/firestore')
@@ -482,43 +482,50 @@ const pages = {
 
 // ─── SEED ─────────────────────────────────────────────────────────────────────
 async function seed() {
-  console.log('🌱 Mulai seeding data demo...\n')
+  const tenantId = process.env.TENANT_ID
+  if (!tenantId) {
+    console.error('❌ TENANT_ID tidak diset.\nContoh: TENANT_ID=abc123 node scripts/seed.js')
+    process.exit(1)
+  }
+
+  const base = `tenants/${tenantId}`
+  console.log(`🌱 Seeding ke tenant: ${tenantId}\n`)
 
   // Settings
-  await setDoc(doc(db, 'settings', 'store'), settings)
+  await setDoc(doc(db, base, 'settings', 'store'), settings)
   console.log('✅ Settings')
 
   // Collections
   for (const col of collections) {
     const { id, ...data } = col
-    await setDoc(doc(db, 'collections', id), data)
+    await setDoc(doc(db, base, 'collections', id), data)
   }
   console.log(`✅ ${collections.length} Collections`)
 
   // Products
   for (const prod of products) {
     const { id, ...data } = prod
-    await setDoc(doc(db, 'products', id), data)
+    await setDoc(doc(db, base, 'products', id), data)
   }
   console.log(`✅ ${products.length} Products`)
 
   // Customers
   for (const cust of customers) {
     const { id, ...data } = cust
-    await setDoc(doc(db, 'customers', id), data)
+    await setDoc(doc(db, base, 'customers', id), data)
   }
   console.log(`✅ ${customers.length} Customers`)
 
   // Orders
   for (const order of orders) {
     const { id, ...data } = order
-    await setDoc(doc(db, 'orders', id), data)
+    await setDoc(doc(db, base, 'orders', id), data)
   }
   console.log(`✅ ${orders.length} Orders`)
 
   // Pages
   for (const [slug, data] of Object.entries(pages)) {
-    await setDoc(doc(db, 'pages', slug), data)
+    await setDoc(doc(db, base, 'pages', slug), data)
   }
   console.log(`✅ ${Object.keys(pages).length} Pages`)
 

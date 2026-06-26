@@ -7,31 +7,32 @@ import OrderDetailCard from '@/components/admin/orders/OrderDetailCard'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/contexts/AuthContext'
 import { getOrderById, updateOrderStatus } from '@/services/orders'
 import { ORDER_STATUSES } from '@/constants'
 import toast from 'react-hot-toast'
 
 export default function OrderDetailPage() {
   const { id } = useParams()
+  const { tenantId } = useAuth()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
 
-  async function load() {
-    const data = await getOrderById(id)
-    setOrder(data)
-    setStatus(data?.status || '')
-    setLoading(false)
-  }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load() }, [id])
+  useEffect(() => {
+    if (!tenantId) return
+    getOrderById(tenantId, id).then((data) => {
+      setOrder(data)
+      setStatus(data?.status || '')
+      setLoading(false)
+    })
+  }, [tenantId, id])
 
   async function handleStatusUpdate() {
     setSaving(true)
     try {
-      await updateOrderStatus(id, status)
+      await updateOrderStatus(tenantId, id, status)
       setOrder((prev) => ({ ...prev, status }))
       toast.success('Status pesanan diperbarui')
     } catch {

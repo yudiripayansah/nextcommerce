@@ -13,48 +13,50 @@ import {
   serverTimestamp,
 } from '@/lib/firestore'
 
-const COL = collection(db, 'addresses')
+function col(tenantId) {
+  return collection(db, 'tenants', tenantId, 'addresses')
+}
 
-export async function getAddresses(customerId) {
-  const q = query(COL, where('customerId', '==', customerId), orderBy('isDefault', 'desc'))
+function ref(tenantId, id) {
+  return doc(db, 'tenants', tenantId, 'addresses', id)
+}
+
+export async function getAddresses(tenantId, customerId) {
+  const q = query(col(tenantId), where('customerId', '==', customerId), orderBy('isDefault', 'desc'))
   const snap = await getDocs(q)
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
 }
 
-export async function getDefaultAddress(customerId) {
-  const q = query(COL, where('customerId', '==', customerId), where('isDefault', '==', true))
+export async function getDefaultAddress(tenantId, customerId) {
+  const q = query(col(tenantId), where('customerId', '==', customerId), where('isDefault', '==', true))
   const snap = await getDocs(q)
   if (snap.empty) return null
   const d = snap.docs[0]
   return { id: d.id, ...d.data() }
 }
 
-export async function addAddress(customerId, data) {
-  if (data.isDefault) {
-    await clearDefault(customerId)
-  }
-  const ref = await addDoc(COL, {
+export async function addAddress(tenantId, customerId, data) {
+  if (data.isDefault) await clearDefault(tenantId, customerId)
+  const r = await addDoc(col(tenantId), {
     ...data,
     customerId,
     createdAt: serverTimestamp(),
   })
-  return ref.id
+  return r.id
 }
 
-export async function updateAddress(id, customerId, data) {
-  if (data.isDefault) {
-    await clearDefault(customerId)
-  }
-  await updateDoc(doc(db, 'addresses', id), { ...data, updatedAt: serverTimestamp() })
+export async function updateAddress(tenantId, id, customerId, data) {
+  if (data.isDefault) await clearDefault(tenantId, customerId)
+  await updateDoc(ref(tenantId, id), { ...data, updatedAt: serverTimestamp() })
 }
 
-export async function deleteAddress(id) {
-  await deleteDoc(doc(db, 'addresses', id))
+export async function deleteAddress(tenantId, id) {
+  await deleteDoc(ref(tenantId, id))
 }
 
-async function clearDefault(customerId) {
-  const existing = await getDefaultAddress(customerId)
+async function clearDefault(tenantId, customerId) {
+  const existing = await getDefaultAddress(tenantId, customerId)
   if (existing) {
-    await updateDoc(doc(db, 'addresses', existing.id), { isDefault: false })
+    await updateDoc(ref(tenantId, existing.id), { isDefault: false })
   }
 }

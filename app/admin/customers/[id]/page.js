@@ -6,25 +6,28 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import CustomerCard from '@/components/admin/customers/CustomerCard'
 import OrderStatusBadge from '@/components/admin/orders/OrderStatusBadge'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/contexts/AuthContext'
 import { getCustomerById } from '@/services/customers'
 import { getOrdersByCustomer } from '@/services/orders'
 import { formatCurrency, formatDate } from '@/lib/helpers'
 
 export default function CustomerDetailPage() {
   const { id } = useParams()
+  const { tenantId } = useAuth()
   const [customer, setCustomer] = useState(null)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!tenantId) return
     async function load() {
-      const [c, o] = await Promise.all([getCustomerById(id), getOrdersByCustomer(id)])
+      const [c, o] = await Promise.all([getCustomerById(tenantId, id), getOrdersByCustomer(tenantId, id)])
       setCustomer(c)
       setOrders(o)
       setLoading(false)
     }
     load()
-  }, [id])
+  }, [tenantId, id])
 
   if (loading) return <AdminLayout title="Detail Pelanggan"><LoadingSpinner className="py-16" /></AdminLayout>
   if (!customer) return <AdminLayout title="Detail Pelanggan"><p className="text-gray-500">Pelanggan tidak ditemukan.</p></AdminLayout>

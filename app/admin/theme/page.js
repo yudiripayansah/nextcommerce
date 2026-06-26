@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
+import { useAuth } from '@/contexts/AuthContext'
 import { TEMPLATES, DEFAULT_TEMPLATE, DEFAULT_PRESET, applyThemeVars, applyTemplate, parseStoredTheme } from '@/lib/theme'
 import { getSettings, saveSettings } from '@/services/settings'
 
@@ -187,6 +188,7 @@ function LivePreview({ template, colors }) {
 }
 
 export default function ThemePage() {
+  const { tenantId, tenant } = useAuth()
   const [selectedTemplate, setSelectedTemplate] = useState(DEFAULT_TEMPLATE.id)
   const [selectedPresetId, setSelectedPresetId] = useState(DEFAULT_PRESET.id)
   const [colors, setColors] = useState(DEFAULT_PRESET.colors)
@@ -195,9 +197,10 @@ export default function ThemePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!tenantId) return
     async function load() {
       try {
-        const settings = await getSettings()
+        const settings = await getSettings(tenantId)
         const { template, colors: c } = parseStoredTheme(settings?.theme)
         setSelectedTemplate(template)
         setColors(c)
@@ -213,13 +216,12 @@ export default function ThemePage() {
         applyThemeVars(c)
         applyTemplate(template)
       } catch {
-        // use defaults
-      } finally {
+        } finally {
         setLoading(false)
       }
     }
     load()
-  }, [])
+  }, [tenantId])
 
   const currentTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || DEFAULT_TEMPLATE
 
@@ -249,12 +251,14 @@ export default function ThemePage() {
   }
 
   async function handleSave() {
+    if (!tenantId) return
     setSaving(true)
     setSaved(false)
     try {
       const themeData = { template: selectedTemplate, ...colors }
-      await saveSettings({ theme: themeData })
-      try { localStorage.setItem('store_theme', JSON.stringify(themeData)) } catch {}
+      await saveSettings(tenantId, { theme: themeData })
+      const storageKey = tenant?.slug ? `store_theme_${tenant.slug}` : 'store_theme'
+      try { localStorage.setItem(storageKey, JSON.stringify(themeData)) } catch {}
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } finally {

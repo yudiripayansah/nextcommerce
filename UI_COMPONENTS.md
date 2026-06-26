@@ -4,35 +4,21 @@
 
 Reference: editorial fashion minimal, inspired by my.therestyletrait.com
 
-Also inspired by:
+Also inspired by: Shopify Admin (admin UI), Tokopedia (product grid), Nike (typography, whitespace).
 
-* Shopify Admin (admin UI)
-* Tokopedia (product grid)
-* Nike (typography, whitespace)
+Goals: Clean · Fast · Minimal · Mobile First
 
-Goals:
-
-* Clean
-* Fast
-* Minimal
-* Mobile First
-
-Avoid:
-
-* Fancy animations
-* Heavy UI libraries
-* Complex interactions
+Avoid: fancy animations, heavy UI libraries, complex interactions.
 
 ---
 
 # Store Design Tokens
 
 Typography:
+- Body: Inter (sans-serif)
+- Headings: Playfair Display (serif) — via CSS `@import` in `globals.css`
 
-* Body: Inter (sans-serif)
-* Headings: Playfair Display (serif) — via CSS `@import` in `globals.css`
-
-Colors (CSS variables, set by ThemeContext):
+Colors (CSS variables, set by ThemeContext per tenant):
 
 ```css
 --color-primary     /* button bg, key accents */
@@ -43,138 +29,67 @@ Colors (CSS variables, set by ThemeContext):
 --color-text        /* body text */
 ```
 
+Structural variables (set by template):
+
+```css
+--tm-radius / --tm-radius-sm / --tm-radius-lg / --tm-radius-pill
+--tm-card-shadow / --tm-card-hover-shadow
+```
+
 Default theme: black (`#000000`) on white (`#ffffff`).
 
 ---
 
-# Shared UI Components
+# Shared UI Components (`components/ui/`)
 
 ## Button
 
-Path: `components/ui/Button.js`
+Props: `{ children, onClick, disabled, loading, variant, type, className }`
 
-Variants:
-
-```txt
-primary    — filled, uses --color-primary
-secondary  — gray
-outline    — border only
-danger     — red
-success    — green
-```
-
-Props:
-
-```js
-{ children, onClick, disabled, loading, variant, type, className }
-```
-
----
+Variants: `primary` · `secondary` · `outline` · `danger` · `success`
 
 ## Input
 
-Path: `components/ui/Input.js`
-
-Props:
-
-```js
-{ label, placeholder, value, onChange, error, type, required, ...rest }
-```
-
----
+Props: `{ label, placeholder, value, onChange, error, type, required, ...rest }`
 
 ## Textarea
 
-Path: `components/ui/Textarea.js`
-
-Props:
-
-```js
-{ label, placeholder, value, onChange, error, rows, ...rest }
-```
-
----
+Props: `{ label, placeholder, value, onChange, error, rows, ...rest }`
 
 ## Select
 
-Path: `components/ui/Select.js`
-
-Props:
-
-```js
-{ label, value, onChange, options, error, ...rest }
-// options: [{ value, label }]
-```
-
----
+Props: `{ label, value, onChange, options, error, ...rest }` — `options: [{ value, label }]`
 
 ## Modal
 
-Path: `components/ui/Modal.js`
-
-Reusable confirmation/content modal.
-
-Props:
-
-```js
-{ open, onClose, title, children }
-```
-
----
+Props: `{ open, onClose, title, children }` — reusable confirmation/content modal.
 
 ## LoadingSpinner
 
-Path: `components/ui/LoadingSpinner.js`
-
 Inline or full-page spinner.
-
----
 
 ## EmptyState
 
-Path: `components/ui/EmptyState.js`
-
-Shown when a list has no data.
-
-Props:
-
-```js
-{ title, description, action }
-```
-
----
+Props: `{ title, description, action }` — shown when a list has no data.
 
 ## Pagination
 
-Path: `components/ui/Pagination.js`
-
-Props:
-
-```js
-{ page, totalPages, onChange }
-```
-
-Used in: Products, Orders, Customers lists.
+Props: `{ page, totalPages, onChange }` — used in Products, Orders, Customers lists.
 
 ---
 
-# Admin Components
+# Admin Components (`components/admin/`)
 
 ## AdminLayout
 
 Path: `components/admin/AdminLayout.js`
 
-Wraps all `/admin/*` pages.
+Wraps all `/admin/*` pages (imported as a component, not a Next.js layout).
 
-Contains:
-
-* Sidebar (collapsible on mobile)
-* Top header bar
-* Main content area
-
-Redirects unauthenticated users to `/login`.
-
----
+- Reads `useAuth()` from `AuthContext` (storeAuth instance)
+- If loading → spinner
+- If no `user` → redirect to `/admin/login`
+- Contains: collapsible Sidebar (mobile) + top header bar + main content area
 
 ## Sidebar
 
@@ -192,371 +107,157 @@ Halaman        /admin/pages
 Pengaturan     /admin/settings
 ```
 
-Note: Files and Theme are accessible from Settings or direct URL but not always in primary nav.
-
----
-
 ## DashboardCard
 
-Path: `components/admin/DashboardCard.js`
-
-Display a single KPI metric.
-
-Props:
-
-```js
-{ title, value, icon, color }
-```
-
----
+Props: `{ title, value, icon, color }` — single KPI metric.
 
 ## DataTable
 
-Path: `components/admin/DataTable.js`
+Props: `{ columns, data, loading, searchable, pageSize }` — `columns: [{ key, label, render }]`
 
-Reusable table with built-in search, pagination, empty state.
-
-Props:
-
-```js
-{ columns, data, loading, searchable, pageSize }
-// columns: [{ key, label, render }]
-```
-
-Used by: Products, Orders, Customers, Collections pages.
-
----
+Reusable table with built-in search, pagination, empty state. Used by: Products, Orders, Customers, Collections.
 
 ## MediaPicker
 
-Path: `components/admin/MediaPicker.js`
+Props: `{ open, onClose, onSelect, multiple, initialSelected }`
 
-Reusable modal for selecting or uploading files from Cloudinary media library.
-
-Props:
-
-```js
-{
-  open,            // boolean
-  onClose,         // () => void
-  onSelect,        // (urls: string[] | string) => void
-  multiple,        // boolean — allow multi-select (default false)
-  initialSelected  // string[] — pre-selected URLs
-}
-```
-
-Features:
-
-* Drag & drop upload to Cloudinary
-* Browse existing files from Firestore `files` collection
-* Single or multiple selection
-* Delete file from both Cloudinary and Firestore
-* Upload progress indicator
-
----
+Reusable modal for selecting/uploading from Cloudinary media library.
+- Drag & drop upload
+- Browse existing files from Firestore
+- Single or multi-select
+- Delete from Cloudinary + Firestore
 
 ## RichTextEditor
 
-Path: `components/admin/RichTextEditor.js`
-
-Simple rich text editor for CMS pages.
-
-Props:
-
-```js
-{ value, onChange }
-```
-
-Used by: `/admin/pages` editor.
+Props: `{ value, onChange }` — simple rich text for CMS pages.
 
 ---
 
 # Product Admin Components
 
-## ProductForm
+## ProductForm (`components/admin/products/ProductForm.js`)
 
-Path: `components/admin/products/ProductForm.js`
+Full create/edit form: Title (auto-generates handle), Description, Images (via ImageUploader), Collection, Tags, Status. Does NOT include variants.
 
-Full product creation/editing form.
+## ImageUploader (`components/admin/products/ImageUploader.js`)
 
-Fields:
+Multi-image picker using MediaPicker. Preview, remove, reorder.
 
-* Title (auto-generates handle)
-* Description
-* Featured Image + additional images (via ImageUploader)
-* Collection (dropdown)
-* Tags
-* Status (active / draft / archived)
+## VariantGenerator (`components/admin/products/VariantGenerator.js`)
 
-Does NOT include variants — those are handled by VariantGenerator + VariantTable.
+Defines up to 3 options → generates all combinations → passes to VariantTable.
 
----
+## VariantTable (`components/admin/products/VariantTable.js`)
 
-## ImageUploader
-
-Path: `components/admin/products/ImageUploader.js`
-
-Multi-image picker that opens MediaPicker.
-
-Features:
-
-* Open MediaPicker for selection or upload
-* Preview selected images
-* Remove individual images
-* Reorder (drag if needed)
+Editable table: Variant title · SKU · Price · Stock · Image (optional).
 
 ---
 
-## VariantGenerator
+# Collection / Order / Customer Admin Components
 
-Path: `components/admin/products/VariantGenerator.js`
+## CollectionForm — Title, Description, Image, Status
 
-Defines up to 3 product options and generates all variant combinations.
+## OrderStatusBadge — Color-coded: new(blue) contacted(yellow) paid(purple) shipped(indigo) completed(green) cancelled(red)
 
-Example:
+## OrderDetailCard — Order number, date, status, customer WhatsApp link, items table, total, notes, status update dropdown
 
-```txt
-Color: Black, White
-Size: M, L
-
-Generates:
-Black / M
-Black / L
-White / M
-White / L
-```
-
-Passes generated variants to VariantTable for editing.
+## CustomerCard — Name, WhatsApp, Total Orders, Total Spending, Last Order Date
 
 ---
 
-## VariantTable
+# Storefront Components (`components/store/`)
 
-Path: `components/admin/products/VariantTable.js`
+## Header (`components/store/Header.js`)
 
-Editable table of generated variants.
+Two template variants (`useTheme().template`):
+- `urban-fashion` → `UrbanFashionHeader`
+- `happy-hobby` → `HappyHobbyHeader`
 
-Columns:
+Structure (Urban Fashion):
+- Announcement bar (black strip)
+- Centered logo (from settings)
+- Nav left: uppercase collection links
+- Icons right: account icon + cart badge
+- Mobile hamburger
 
-```txt
-Variant title
-SKU
-Price
-Stock
-Image (optional, per-variant)
-```
+Account icon: if `customerUser` logged in → `/{slug}/account`, else → `/{slug}/account/login`
 
----
+## Footer (`components/store/Footer.js`)
 
-# Collection Admin Components
+Two template variants. Columns: Brand info · Shop links · Info links · Social icons. Bottom bar: copyright + quick links.
 
-## CollectionForm
+## ProductCard (`components/store/ProductCard.js`)
 
-Path: `components/admin/collections/CollectionForm.js`
+- `aspect-[3/4]` portrait, `bg-stone-100`
+- Hover scale-105 (700ms)
+- "Habis" badge if `totalStock === 0`
+- Uppercase collection label · title · price range
 
-Fields:
+## ProductGallery (`components/store/ProductGallery.js`)
 
-* Title (auto-generates handle)
-* Description
-* Image (via MediaPicker)
-* Status (active / draft)
+Product detail image display:
+- Desktop: vertical thumbnail strip on LEFT, large main image on right
+- Mobile: main image on top, horizontal thumbnail scroll below
+- Click thumbnail to switch main image
 
----
+## ProductVariantSelector (`components/store/ProductVariantSelector.js`)
 
-# Order Admin Components
+- One selector per option (Color, Size, etc.)
+- Selected: dark filled button with `var(--color-primary)` via inline style
+- Unavailable: diagonal strikethrough line, disabled
 
-## OrderStatusBadge
+## CartItem (`components/store/CartItem.js`)
 
-Path: `components/admin/orders/OrderStatusBadge.js`
+Single cart line item: image · title + variant · unit price · qty controls (+ / -) · subtotal · remove.
 
-Color-coded status badge.
+## AccountLayout (`components/store/AccountLayout.js`)
 
-Statuses:
+Wraps all `/{slug}/account/*` pages.
+- Reads `useCustomerAuth()` from `CustomerAuthContext` (customerAuth instance)
+- If `!loading && !customerUser` → redirect to `/{slug}/account/login`
+- Sidebar: Akun Saya · Riwayat Pesanan · Buku Alamat · Logout
 
-```txt
-new        — blue
-contacted  — yellow
-paid       — purple
-shipped    — indigo
-completed  — green
-cancelled  — red
-```
+## WhatsAppOrderButton (`components/store/WhatsAppOrderButton.js`)
 
----
+Cart page CTA:
+- Collect name + WhatsApp (pre-filled if logged in)
+- Validate → Create order in Firestore → Upsert customer → Generate WhatsApp message → Redirect to `wa.me`
+- Clear cart after redirect
 
-## OrderDetailCard
+## FaviconSync (`components/store/FaviconSync.js`)
 
-Path: `components/admin/orders/OrderDetailCard.js`
-
-Displays full order detail.
-
-Contains:
-
-* Order number, date, status
-* Customer name + WhatsApp link
-* Order items table
-* Total amount
-* Notes
-* Status update dropdown
+Client component — reads `settings.favicon` from `SettingsContext`, updates `<link rel="icon">` dynamically. Placed inside store shell, outside main content tree.
 
 ---
 
-# Customer Admin Components
+# Authentication Pages
 
-## CustomerCard
+## `/login` (Superadmin)
 
-Path: `components/admin/customers/CustomerCard.js`
+Uses `useSuperAdmin()` from `SuperAdminContext` (primary Firebase `auth`).
+Redirects to `/superadmin` on success.
+Error `NOT_SUPERADMIN` → "Akun ini bukan akun superadmin."
+Footer link: "Admin toko? Login di sini → /admin/login"
 
-Summary card for a single customer.
+## `/admin/login` (Admin Toko)
 
-Displays:
+Uses `useAuth()` from `AuthContext` (Firebase `storeAuth`).
+Redirects to `/admin` via `useEffect` watching `user`.
+Error `NOT_ADMIN` → "Akun ini bukan akun admin toko."
+Footer link: "Superadmin? Login di sini → /login"
 
-* Name
-* WhatsApp
-* Total Orders
-* Total Spending
-* Last Order Date
+## `/{slug}/account/login` (Customer)
 
----
+Uses `useCustomerAuth()` from `CustomerAuthContext` (Firebase `customerAuth`).
+Redirects to `/{slug}/account` via `useEffect` watching `customerUser`.
+Error `ADMIN_ACCOUNT` → "Akun ini adalah akun admin."
+Link to register page.
 
-# Storefront Components
+## `/{slug}/account/register` (Customer)
 
-## Header
-
-Path: `components/store/Header.js`
-
-Structure:
-
-* Announcement bar (black strip, configurable text)
-* Centered logo (from settings)
-* Navigation left: uppercase collection links
-* Icons right: account icon + cart icon with item count badge
-* Mobile hamburger menu
-
-Account icon behavior:
-
-* If customer logged in → `/account`
-* If guest → `/account/login`
-
----
-
-## Footer
-
-Path: `components/store/Footer.js`
-
-Columns:
-
-* Brand info (store name, address, WhatsApp link)
-* Shop links (collections)
-* Info links (About, How to Buy, FAQ, Contact)
-* Social media icons (Instagram, Facebook, TikTok)
-
-Bottom bar: copyright + quick links.
-
----
-
-## ProductCard
-
-Path: `components/store/ProductCard.js`
-
-Used in: Home page, Collection pages, search results.
-
-Layout:
-
-* `aspect-[3/4]` portrait image, `bg-stone-100`
-* Hover: scale-105 on image (700ms transition)
-* "Habis" badge if `totalStock === 0`
-* Uppercase collection label (small, gray)
-* Product title
-* Price (range if min ≠ max)
-
----
-
-## ProductGallery
-
-Path: `components/store/ProductGallery.js`
-
-Product detail image display.
-
-Features:
-
-* Large featured image
-* Thumbnail strip
-* Click thumbnail to switch main image
-
----
-
-## ProductVariantSelector
-
-Path: `components/store/ProductVariantSelector.js`
-
-Option selectors on product detail page.
-
-Features:
-
-* Renders a selector per option (Color, Size, etc.)
-* Matches selected options to a specific variant
-* Shows price and stock of matched variant
-* Disables "Add to Cart" if out of stock
-
----
-
-## CartItem
-
-Path: `components/store/CartItem.js`
-
-Single line item in the cart.
-
-Displays:
-
-* Product image
-* Product title + variant title
-* Unit price
-* Quantity controls (+ / -)
-* Subtotal
-* Remove button
-
----
-
-## AccountLayout
-
-Path: `components/store/AccountLayout.js`
-
-Layout wrapper for all `/account/*` pages.
-
-Features:
-
-* Sidebar: Akun Saya, Riwayat Pesanan, Buku Alamat
-* Redirects to `/account/login` if customer not authenticated
-* Logout button
-
----
-
-## WhatsAppOrderButton
-
-Path: `components/store/WhatsAppOrderButton.js`
-
-Primary CTA on the cart page.
-
-Responsibilities:
-
-* Collect customer name + WhatsApp from form (pre-filled if logged in)
-* Validate inputs
-* Create order in Firestore
-* Upsert customer record
-* Generate WhatsApp message via `buildWhatsAppMessage()`
-* Redirect to `wa.me` URL
-* Clear cart after redirect
-
----
-
-## FaviconSync
-
-Path: `components/store/FaviconSync.js`
-
-Client component that reads `settings.favicon` from `SettingsContext` and updates `<link rel="icon">` dynamically.
-
-Placed directly inside the store layout, outside the main content tree.
+Uses `useCustomerAuth().signUp()`.
+Creates Firebase Auth user (customerAuth) + Firestore `tenants/{tid}/customers/{uid}` doc.
+Redirects to `/{slug}/account` via `useEffect` watching `customerUser`.
 
 ---
 
@@ -565,11 +266,10 @@ Placed directly inside the store layout, outside the main content tree.
 Use React Hook Form for all admin forms.
 
 All forms must:
-
-* Validate required fields
-* Show inline error messages
-* Disable submit button while saving
-* Prevent duplicate submissions (loading state)
+- Validate required fields
+- Show inline error messages
+- Disable submit while saving (loading state)
+- Prevent duplicate submissions
 
 ---
 
@@ -577,12 +277,10 @@ All forms must:
 
 Use react-hot-toast.
 
-Patterns:
-
 ```js
 toast.success('Tersimpan')
 toast.error('Terjadi kesalahan')
 toast.loading('Menyimpan...')
 ```
 
-Keep messages short (1–5 words in Indonesian).
+Keep messages short (1–5 words, Indonesian).

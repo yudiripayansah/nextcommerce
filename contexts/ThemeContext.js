@@ -2,30 +2,43 @@
 
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
 import { useSettings } from '@/contexts/SettingsContext'
+import { useTenant } from '@/contexts/TenantContext'
 import { DEFAULT_PRESET, applyThemeVars, applyTemplate, parseStoredTheme } from '@/lib/theme'
 
 const ThemeContext = createContext(null)
 
-function readLocalTheme() {
+function getStorageKey(slug) {
+  return slug ? `store_theme_${slug}` : 'store_theme'
+}
+
+function readLocalTheme(slug) {
   try {
-    const raw = localStorage.getItem('store_theme')
+    const raw = localStorage.getItem(getStorageKey(slug))
     if (raw) return parseStoredTheme(JSON.parse(raw))
   } catch {}
   return null
 }
 
 export function ThemeProvider({ children }) {
-  const [template, setTemplate] = useState('urban-fashion')
+  // Init from what the inline script already set on <html> to avoid hydration flash
+  const [template, setTemplate] = useState(() => {
+    if (typeof window === 'undefined') return 'urban-fashion'
+    return document.documentElement.getAttribute('data-template') || 'urban-fashion'
+  })
   const [colors, setColors] = useState(DEFAULT_PRESET.colors)
-  // false = hide store shell until correct theme is applied (prevents Urban Fashion flash)
   const [ready, setReady] = useState(false)
   const settings = useSettings()
+  const { tenant } = useTenant() || {}
+  const slug = tenant?.slug
 
-  // Runs synchronously before first browser paint.
-  // Reads localStorage and applies the stored theme immediately.
-  // Sets ready=true so the store shell becomes visible only after correct theme is set.
   useLayoutEffect(() => {
-    const local = readLocalTheme()
+    // Skip when slug is unknown — inline script already handled the initial render.
+    // Reading the no-slug key here would pick up stale data from a different tenant.
+    if (!slug) {
+      setReady(true)
+      return
+    }
+    const local = readLocalTheme(slug)
     if (local) {
       setTemplate(local.template)
       setColors(local.colors)
@@ -33,10 +46,8 @@ export function ThemeProvider({ children }) {
       applyTemplate(local.template)
     }
     setReady(true)
-  }, [])
+  }, [slug])
 
-  // Sync from Firestore via SettingsContext — no separate getSettings() fetch needed.
-  // When settings arrive, apply them and update localStorage for next visit.
   useEffect(() => {
     if (!settings) return
     const { template: t, colors: c } = parseStoredTheme(settings.theme)
@@ -44,22 +55,19 @@ export function ThemeProvider({ children }) {
     setColors(c)
     applyThemeVars(c)
     applyTemplate(t)
-    try { localStorage.setItem('store_theme', JSON.stringify({ template: t, ...c })) } catch {}
-  }, [settings])
+    try { localStorage.setItem(getStorageKey(slug), JSON.stringify({ template: t, ...c })) } catch {}
+  }, [settings, slug])
 
   function setTheme({ template: t, colors: c }) {
     setTemplate(t)
     setColors(c)
     applyThemeVars(c)
     applyTemplate(t)
-    try { localStorage.setItem('store_theme', JSON.stringify({ template: t, ...c })) } catch {}
+    try { localStorage.setItem(getStorageKey(slug), JSON.stringify({ template: t, ...c })) } catch {}
   }
 
   return (
     <ThemeContext.Provider value={{ template, colors, setTheme }}>
-      {/* Hide store shell until useLayoutEffect has resolved the correct theme.
-          This prevents the server-rendered Urban Fashion HTML from being visible
-          before React applies the localStorage theme. */}
       {!ready && (
         <style dangerouslySetInnerHTML={{ __html: '#store-shell{visibility:hidden}' }} />
       )}

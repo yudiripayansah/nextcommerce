@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import Pagination from '@/components/ui/Pagination'
+import { useAuth } from '@/contexts/AuthContext'
 import { uploadImage } from '@/lib/cloudinary'
 import { getFiles, addFile, deleteFile } from '@/services/files'
 import toast from 'react-hot-toast'
@@ -22,24 +23,25 @@ function formatDate(ts) {
 }
 
 export default function FilesPage() {
+  const { tenantId } = useAuth()
   const [files, setFiles] = useState([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadCount, setUploadCount] = useState({ done: 0, total: 0 })
   const [dragOver, setDragOver] = useState(false)
   const [selectedIds, setSelectedIds] = useState(new Set())
-  const [confirmDelete, setConfirmDelete] = useState(null) // single file or 'bulk'
+  const [confirmDelete, setConfirmDelete] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
   const [pageSize, setPageSize] = useState(20)
   const [currentPage, setCurrentPage] = useState(1)
   const inputRef = useRef(null)
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { if (tenantId) load() }, [tenantId])
 
   async function load() {
     setLoading(true)
     try {
-      const data = await getFiles()
+      const data = await getFiles(tenantId)
       setFiles(data)
     } finally {
       setLoading(false)
@@ -47,6 +49,7 @@ export default function FilesPage() {
   }
 
   async function handleUpload(fileList) {
+    if (!tenantId) return
     const toUpload = Array.from(fileList).filter((f) => f.type.startsWith('image/'))
     if (!toUpload.length) return
     setUploading(true)
@@ -55,7 +58,7 @@ export default function FilesPage() {
     for (let i = 0; i < toUpload.length; i++) {
       try {
         const result = await uploadImage(toUpload[i], 'media')
-        const id = await addFile({
+        const id = await addFile(tenantId, {
           url: result.url,
           publicId: result.publicId,
           name: result.name,
@@ -79,7 +82,7 @@ export default function FilesPage() {
 
   async function handleDelete(file) {
     try {
-      await deleteFile(file.id)
+      await deleteFile(tenantId, file.id)
       setFiles((prev) => prev.filter((f) => f.id !== file.id))
       setSelectedIds(prev => { const n = new Set(prev); n.delete(file.id); return n })
       toast.success('File dihapus')
@@ -93,7 +96,7 @@ export default function FilesPage() {
   async function handleBulkDelete() {
     const ids = [...selectedIds]
     try {
-      await Promise.all(ids.map(id => deleteFile(id)))
+      await Promise.all(ids.map(id => deleteFile(tenantId, id)))
       setFiles(prev => prev.filter(f => !ids.includes(f.id)))
       setSelectedIds(new Set())
       toast.success(`${ids.length} file dihapus`)

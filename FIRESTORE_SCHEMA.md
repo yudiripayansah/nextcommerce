@@ -2,387 +2,331 @@
 
 # Database Philosophy
 
-Firestore should be optimized for:
-
 * Low read cost
-* Simple queries
-* Fast dashboard loading
-* Easy maintenance
-
-Avoid:
-
-* Deep nesting
-* Complex joins
-* Large arrays that grow unbounded
-
-Use flat structures whenever possible.
+* Simple queries (no composite indexes)
+* Flat structures where possible
+* Multi-tenant: all store data lives under `tenants/{tenantId}/`
 
 ---
 
-# Collections
+# Top-Level Collections
 
 ```txt
-settings
-collections
-products
-orders
-customers
-addresses
-pages
-files
+users/              — admin + superadmin accounts
+tenants/            — tenant metadata (one doc per store)
+```
+
+# Tenant-Scoped Subcollections
+
+```txt
+tenants/{tenantId}/
+├── settings/       — singleton: doc ID = "store"
+├── collections/
+├── products/
+├── orders/
+├── customers/
+├── addresses/
+├── pages/
+└── files/
 ```
 
 ---
 
-# settings
+# users
 
-Document ID: `store` (singleton)
+Admin and superadmin accounts. Created by superadmin via `/api/create-tenant` or manually.
+
+```js
+// users/{uid}   (uid = Firebase Auth UID)
+{
+  name: "",
+  email: "",
+  role: "admin",      // "admin" | "superadmin"
+  tenantId: "",       // null / undefined for superadmin
+  createdAt: null
+}
+```
+
+Role checks:
+- `role === 'superadmin'` → `SuperAdminContext`, can access `/superadmin`
+- `role === 'admin'` → `AuthContext`, can access `/admin` (scoped to their tenantId)
+
+---
+
+# tenants
+
+One document per store. Created by superadmin.
+
+```js
+// tenants/{tenantId}
+{
+  name: "",
+  slug: "",           // URL path segment: /{slug}
+  plan: "free",       // "free" | "pro" | "enterprise"
+  status: "active",   // "active" | "inactive" | "suspended"
+  ownerName: "",
+  email: "",
+  whatsapp: "",       // 628xxxxxxxxxx
+  createdAt: null,
+  updatedAt: null
+}
+```
+
+Query (superadmin only):
+```js
+query(collection(db, 'tenants'), orderBy('createdAt', 'desc'))
+```
+
+---
+
+# tenants/{tenantId}/settings
+
+Singleton. Document ID: `store`.
 
 ```js
 {
   storeName: "",
-
-  logo: "",             // Cloudinary URL
-
-  favicon: "",          // Cloudinary URL
-
-  whatsappNumber: "",   // format: 628xxxxxxxxxx (no + or spaces)
-
+  logo: "",           // Cloudinary URL
+  favicon: "",        // Cloudinary URL
+  whatsappNumber: "", // 628xxxxxxxxxx
   email: "",
-
   phone: "",
-
   address: "",
-
   facebook: "",
-
   instagram: "",
-
   tiktok: "",
-
-  theme: {              // optional, color preset object
-    primary: "",
-    primaryFg: "",
-    accent: "",
-    bg: "",
-    surface: "",
-    text: ""
+  theme: {
+    template: "urban-fashion",  // "urban-fashion" | "happy-hobby"
+    primary: "#000000",
+    primaryFg: "#ffffff",
+    accent: "#374151",
+    bg: "#ffffff",
+    surface: "#f9fafb",
+    text: "#111827"
   },
-
   updatedAt: null
 }
 ```
 
 ---
 
-# collections
+# tenants/{tenantId}/collections
 
 ```js
 {
   id: "",
-
   title: "",
-
-  handle: "",           // slugified, url-safe
-
+  handle: "",         // slugified, url-safe
   description: "",
-
-  image: "",            // Cloudinary URL
-
-  status: "active",     // active | draft
-
+  image: "",          // Cloudinary URL
+  status: "active",   // "active" | "draft"
   productCount: 0,
-
   createdAt: null,
-
   updatedAt: null
 }
 ```
 
 Query pattern:
-
 ```js
-// Avoid composite index: fetch all with single orderBy, filter client-side
+// Single orderBy, filter client-side to avoid composite index
 query(COL, orderBy('createdAt', 'desc'))
-// then: results.filter(c => c.status === 'active')
+// then: .filter(c => c.status === 'active')
 ```
 
 ---
 
-# products
+# tenants/{tenantId}/products
 
 ```js
 {
   id: "",
-
   title: "",
-
-  handle: "",           // slugified, url-safe
-
+  handle: "",
   description: "",
-
-  featuredImage: "",    // Cloudinary URL
-
-  images: [],           // Cloudinary URLs
-
+  featuredImage: "",  // Cloudinary URL
+  images: [],         // Cloudinary URLs
   tags: [],
-
   collectionId: "",
-
   collectionTitle: "",
-
-  options: [            // max 3 options
+  options: [          // max 3
     { name: "Color", values: ["Black", "White"] }
   ],
-
-  variants: [           // generated from options
+  variants: [
     {
       id: "",
       title: "Black / M",
       sku: "",
       price: 0,
       stock: 0,
-      image: "",
+      image: "",      // optional per-variant Cloudinary URL
       option1: "Black",
       option2: "M",
       option3: ""
     }
   ],
-
-  status: "active",     // active | draft | archived
-
+  status: "active",   // "active" | "draft" | "archived"
   createdAt: null,
-
   updatedAt: null
 }
 ```
 
-Important:
-
-`minPrice`, `maxPrice`, `totalStock` are NOT stored in Firestore.
-They are computed client-side by `normalize()` in `services/products.js`:
-
-```js
-function normalize(product) {
-  const variants = product.variants || []
-  const prices = variants.map(v => v.price || 0).filter(Boolean)
-  const stock = variants.reduce((sum, v) => sum + (v.stock || 0), 0)
-  return {
-    ...product,
-    minPrice: prices.length ? Math.min(...prices) : 0,
-    maxPrice: prices.length ? Math.max(...prices) : 0,
-    totalStock: stock,
-  }
-}
-```
+`minPrice`, `maxPrice`, `totalStock` are NOT stored — computed client-side by `normalize()` in `services/products.js`.
 
 Query patterns:
-
 ```js
-// Products list: single orderBy + client filter
+// List: single orderBy + client filter
 query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
-// then filter by status/collectionId client-side
 
-// By handle: where only
+// By handle:
 query(COL, where('handle', '==', handle))
 
-// By collection: where only, sort by createdAt.seconds client-side
+// By collection (sort client-side):
 query(COL, where('collectionId', '==', collectionId))
-// then .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+// .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0))
 
-// Search: fetch active with limit, filter client-side by title/description/tags
+// Search (client-side filter on fetched active products):
 query(COL, where('status', '==', 'active'), limit(200))
 ```
 
 ---
 
-# customers
+# tenants/{tenantId}/customers
 
-Document ID: Firebase Auth UID (registered customers) or Firestore auto-ID (guest orders)
+Document ID = Firebase Auth UID for registered customers, or Firestore auto-ID for guests.
 
 ```js
 {
   id: "",
-
   name: "",
-
-  email: "",            // populated for registered customers, empty for guests
-
+  email: "",          // populated for registered customers
   whatsapp: "",
-
   totalOrders: 0,
-
   totalSpent: 0,
-
   lastOrderDate: null,
-
   createdAt: null,
-
   updatedAt: null
 }
 ```
 
-Customers are upserted automatically when an order is placed.
-
-Registered customers are created in Firebase Auth + this collection simultaneously.
+Customers are upserted automatically when an order is placed (guest or registered).
+Registered customers have a matching Firebase Auth entry via `customerAuth` instance.
 
 ---
 
-# addresses
+# tenants/{tenantId}/addresses
 
 ```js
 {
   id: "",
-
-  customerId: "",       // Firebase Auth UID of the customer
-
+  customerId: "",     // Firebase Auth UID
   recipientName: "",
-
   phone: "",
-
   address: "",
-
   city: "",
-
   province: "",
-
   postalCode: "",
-
   isDefault: false,
-
   createdAt: null,
-
   updatedAt: null
 }
 ```
 
 Query pattern:
-
 ```js
-// Fetch customer addresses, default first
 query(COL, where('customerId', '==', customerId), orderBy('isDefault', 'desc'))
 ```
 
-When setting a new default: clear the old default first, then set the new one.
+To set a new default: clear existing default first, then set new one.
 
 ---
 
-# orders
+# tenants/{tenantId}/orders
 
 ```js
 {
   id: "",
-
-  orderNumber: "",      // e.g. ORD-20240101-XXXX
-
+  orderNumber: "",    // "ORD-YYYYMMDD-XXXX"
   customerId: "",
-
   customerName: "",
-
   customerWhatsapp: "",
-
   notes: "",
-
   items: [
     {
       productId: "",
       productTitle: "",
       variantTitle: "",
-      quantity: 1,
-      price: 120000,
-      subtotal: 120000
+      price: 0,
+      quantity: 0,
+      subtotal: 0
     }
   ],
-
   totalItems: 0,
-
   totalAmount: 0,
-
-  status: "new",        // new | contacted | paid | shipped | completed | cancelled
-
+  status: "new",      // new | contacted | paid | shipped | completed | cancelled
   createdAt: null,
-
   updatedAt: null
 }
 ```
 
-Statuses (in order):
-
-```txt
-new        — order just placed via WhatsApp
-contacted  — admin has contacted the customer
-paid       — customer has paid
-shipped    — order has been shipped
-completed  — order delivered and done
-cancelled  — order cancelled
+Statuses:
+```
+new        — placed via WhatsApp
+contacted  — admin reached out
+paid       — payment confirmed
+shipped    — in transit
+completed  — delivered
+cancelled  — cancelled
 ```
 
 Query patterns:
-
 ```js
-// List all: single orderBy
+// List: single orderBy
 query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
 
-// By customer: where only, sort client-side
+// By customer (sort client-side):
 query(COL, where('customerId', '==', customerId))
-// then .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+// .sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0))
 ```
 
 ---
 
-# pages
+# tenants/{tenantId}/pages
 
 Document ID = slug (fixed set):
 
 ```txt
-about-us
-contact-us
-how-to-buy
-faq
+about-us | contact-us | how-to-buy | faq
 ```
 
 ```js
 {
   title: "",
-
-  content: "",          // HTML string from rich text editor
-
+  content: "",        // HTML string from rich text editor
   updatedAt: null
 }
 ```
 
-These documents are pre-created by the seed script and edited via `/admin/pages`.
-
 ---
 
-# files
+# tenants/{tenantId}/files
 
-Media library records (mirrors Cloudinary).
+Mirrors Cloudinary. Each upload adds a record here.
 
 ```js
 {
   id: "",
-
-  url: "",              // Cloudinary secure_url
-
-  publicId: "",         // Cloudinary public_id (for deletion)
-
+  url: "",            // Cloudinary secure_url
+  publicId: "",       // Cloudinary public_id (for deletion)
   name: "",
-
-  size: 0,              // bytes
-
-  format: "",           // jpg, png, webp, etc.
-
+  size: 0,            // bytes
+  format: "",         // jpg, png, webp…
   width: 0,
-
   height: 0,
-
   createdAt: null
 }
 ```
 
 Query pattern:
-
 ```js
 query(COL, orderBy('createdAt', 'desc'), limit(200))
 ```
@@ -391,22 +335,8 @@ query(COL, orderBy('createdAt', 'desc'), limit(200))
 
 # Analytics Strategy
 
-Do NOT calculate analytics from all orders on every page load.
+For MVP: query orders with simple filters, compute totals client-side in dashboard.
 
-For MVP: query orders with simple filters and compute totals client-side in the dashboard.
+Do NOT calculate analytics from all orders on every page load — use `limit()` and compute only what's visible.
 
-Future: use a separate `analytics` collection (denormalized summary document) updated via Cloud Functions when order status changes.
-
-Future document structure:
-
-```js
-// analytics/summary
-{
-  totalRevenue: 0,
-  totalOrders: 0,
-  totalCustomers: 0,
-  monthlyRevenue: 0,
-  monthlyOrders: 0,
-  updatedAt: null
-}
-```
+Future: `tenants/{tenantId}/analytics/summary` updated via Cloud Functions on order status change.

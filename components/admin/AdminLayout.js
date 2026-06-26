@@ -8,7 +8,7 @@ import LoadingSpinner from '../ui/LoadingSpinner'
 
 export default function AdminLayout({ children, title }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { user, loading } = useAuth()
+  const { user, role, loading } = useAuth()
   const router = useRouter()
 
   if (loading) {
@@ -20,7 +20,7 @@ export default function AdminLayout({ children, title }) {
   }
 
   if (!user) {
-    router.replace('/login')
+    router.replace('/admin/login')
     return null
   }
 

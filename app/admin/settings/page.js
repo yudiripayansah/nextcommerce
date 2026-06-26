@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '@/components/admin/AdminLayout'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
+import { useAuth } from '@/contexts/AuthContext'
 import { getSettings, saveSettings } from '@/services/settings'
 import MediaPicker from '@/components/admin/MediaPicker'
 import toast from 'react-hot-toast'
@@ -22,14 +23,16 @@ const DEFAULTS = {
 }
 
 export default function SettingsPage() {
+  const { tenantId } = useAuth()
   const [form, setForm] = useState(DEFAULTS)
   const [saving, setSaving] = useState(false)
   const [logoPicker, setLogoPicker] = useState(false)
   const [faviconPicker, setFaviconPicker] = useState(false)
 
   useEffect(() => {
-    getSettings().then((s) => { if (s) setForm({ ...DEFAULTS, ...s }) })
-  }, [])
+    if (!tenantId) return
+    getSettings(tenantId).then((s) => { if (s) setForm({ ...DEFAULTS, ...s }) })
+  }, [tenantId])
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -37,9 +40,10 @@ export default function SettingsPage() {
 
   async function handleSave(e) {
     e.preventDefault()
+    if (!tenantId) return
     setSaving(true)
     try {
-      await saveSettings(form)
+      await saveSettings(tenantId, form)
       toast.success('Pengaturan disimpan')
     } catch {
       toast.error('Gagal menyimpan')

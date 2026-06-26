@@ -13,41 +13,46 @@ import {
   serverTimestamp,
 } from '@/lib/firestore'
 
-const COL = collection(db, 'orders')
+function col(tenantId) {
+  return collection(db, 'tenants', tenantId, 'orders')
+}
 
-export async function getOrders({ status, pageLimit = 50 } = {}) {
-  // Fetch with single orderBy, filter status client-side
-  const q = query(COL, orderBy('createdAt', 'desc'), limit(pageLimit))
+function ref(tenantId, id) {
+  return doc(db, 'tenants', tenantId, 'orders', id)
+}
+
+export async function getOrders(tenantId, { status, pageLimit = 50 } = {}) {
+  const q = query(col(tenantId), orderBy('createdAt', 'desc'), limit(pageLimit))
   const snap = await getDocs(q)
   let results = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
   if (status) results = results.filter((o) => o.status === status)
   return results
 }
 
-export async function getOrderById(id) {
-  const snap = await getDoc(doc(db, 'orders', id))
+export async function getOrderById(tenantId, id) {
+  const snap = await getDoc(ref(tenantId, id))
   if (!snap.exists()) return null
   return { id: snap.id, ...snap.data() }
 }
 
-export async function createOrder(data) {
-  const ref = await addDoc(COL, {
+export async function createOrder(tenantId, data) {
+  const r = await addDoc(col(tenantId), {
     ...data,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
-  return ref.id
+  return r.id
 }
 
-export async function updateOrderStatus(id, status) {
-  await updateDoc(doc(db, 'orders', id), {
+export async function updateOrderStatus(tenantId, id, status) {
+  await updateDoc(ref(tenantId, id), {
     status,
     updatedAt: serverTimestamp(),
   })
 }
 
-export async function getOrdersByCustomer(customerId) {
-  const q = query(COL, where('customerId', '==', customerId))
+export async function getOrdersByCustomer(tenantId, customerId) {
+  const q = query(col(tenantId), where('customerId', '==', customerId))
   const snap = await getDocs(q)
   return snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))

@@ -1,4 +1,4 @@
-// Jalankan: node scripts/seed-products.js
+// Jalankan: TENANT_ID=xxx node scripts/seed-products.js
 
 const { initializeApp } = require('firebase/app')
 const { getFirestore, setDoc, doc, Timestamp } = require('firebase/firestore')
@@ -203,11 +203,17 @@ const aksesoris = [
 const products = [...kaosPria, ...kaosWanita, ...celana, ...aksesoris]
 
 async function seed() {
-  console.log('🌱 Seeding 100 sample products...\n')
+  const tenantId = process.env.TENANT_ID
+  if (!tenantId) {
+    console.error('❌ TENANT_ID tidak diset.\nContoh: TENANT_ID=abc123 node scripts/seed-products.js')
+    process.exit(1)
+  }
+
+  console.log(`🌱 Seeding 100 produk ke tenant: ${tenantId}\n`)
 
   for (const prod of products) {
     const { id, ...data } = prod
-    await setDoc(doc(db, 'products', id), data)
+    await setDoc(doc(db, 'tenants', tenantId, 'products', id), data)
     process.stdout.write('.')
   }
 

@@ -9,10 +9,12 @@ import ImageUploader from './ImageUploader'
 import VariantGenerator from './VariantGenerator'
 import VariantTable from './VariantTable'
 import { slugify, generateVariantCombinations } from '@/lib/helpers'
+import { useAuth } from '@/contexts/AuthContext'
 import { getCollections } from '@/services/collections'
 import { PRODUCT_STATUSES } from '@/constants'
 
 export default function ProductForm({ initialData, onSubmit, loading }) {
+  const { tenantId } = useAuth()
   const [form, setForm] = useState({
     title: '',
     handle: '',
@@ -32,10 +34,11 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
   const [globalPrice, setGlobalPrice] = useState('')
 
   useEffect(() => {
-    getCollections({ status: 'active' }).then((c) =>
+    if (!tenantId) return
+    getCollections(tenantId, { status: 'active' }).then((c) =>
       setCollections(c.map((x) => ({ value: x.id, label: x.title, title: x.title })))
     )
-  }, [])
+  }, [tenantId])
 
   function set(field, value) {
     setForm((prev) => {
