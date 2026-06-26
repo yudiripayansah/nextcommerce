@@ -3,6 +3,8 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { CartProvider } from '@/store/cartStore'
 import { Toaster } from 'react-hot-toast'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: {
     default: 'OnlineShop',
