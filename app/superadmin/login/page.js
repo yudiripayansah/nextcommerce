@@ -1,20 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useSuperAdmin } from '@/contexts/SuperAdminContext'
 import Link from 'next/link'
-export default function AdminLoginPage() {
+
+export default function SuperadminLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login, user } = useAuth()
+  const { login } = useSuperAdmin()
   const router = useRouter()
-
-  useEffect(() => {
-    if (user) router.replace('/admin')
-  }, [user, router])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -22,10 +19,10 @@ export default function AdminLoginPage() {
     setLoading(true)
     try {
       await login(email, password)
-      // redirect handled by useEffect watching user
+      router.replace('/superadmin')
     } catch (err) {
-      if (err?.message === 'NOT_ADMIN') {
-        setError('Akun ini bukan akun admin toko.')
+      if (err?.message === 'NOT_SUPERADMIN') {
+        setError('Akun ini bukan akun superadmin.')
       } else {
         setError('Email atau password salah.')
       }
@@ -38,8 +35,8 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Toko</h1>
-          <p className="text-sm text-gray-500 mt-1">Masuk ke panel admin toko</p>
+          <h1 className="text-2xl font-bold text-gray-900">Superadmin</h1>
+          <p className="text-sm text-gray-500 mt-1">360&5 NextCommerce</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -52,7 +49,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black"
-                placeholder="admin@toko.com"
+                placeholder="superadmin@email.com"
               />
             </div>
             <div>
@@ -82,8 +79,8 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Superadmin?{' '}
-          <Link href="/superadmin/login" className="text-gray-600 hover:underline">Login di sini</Link>
+          Admin toko?{' '}
+          <Link href="/admin/login" className="text-gray-600 hover:underline">Login di sini</Link>
         </p>
       </div>
     </div>

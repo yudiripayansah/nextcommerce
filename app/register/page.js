@@ -118,7 +118,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-gray-500 mt-5">
           Sudah punya akun?{' '}
-          <Link href="/login" className="text-black font-medium hover:underline">Masuk</Link>
+          <Link href="/admin/login" className="text-black font-medium hover:underline">Masuk</Link>
         </p>
       </div>
     </div>

@@ -152,7 +152,7 @@ export default function SuperadminPage() {
   useEffect(() => {
     if (authLoading) return
     if (!user) {
-      router.replace('/login')
+      router.replace('/superadmin/login')
       return
     }
     getTenants().then(setTenants).finally(() => setLoading(false))
@@ -191,7 +191,7 @@ export default function SuperadminPage() {
             <h1 className="font-bold text-gray-900">Superadmin Panel</h1>
             <p className="text-xs text-gray-500 mt-0.5">360&5 NextCommerce · {tenants.length} toko terdaftar</p>
           </div>
-          <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700">Keluar</Link>
+          <Link href="/superadmin/login" className="text-sm text-gray-500 hover:text-gray-700">Keluar</Link>
         </div>
       </header>
 
