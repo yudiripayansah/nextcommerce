@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSuperAdmin } from '@/contexts/SuperAdminContext'
 import { getTenants } from '@/services/tenants'
 import { formatDate } from '@/lib/helpers'
-
+import Link from 'next/link'
 const PLAN_COLOR = { free: 'bg-gray-100 text-gray-700', pro: 'bg-blue-100 text-blue-700', enterprise: 'bg-purple-100 text-purple-700' }
 const STATUS_COLOR = { active: 'bg-green-100 text-green-700', inactive: 'bg-red-100 text-red-700', suspended: 'bg-yellow-100 text-yellow-700' }
 
