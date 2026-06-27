@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { useSettings } from '@/contexts/SettingsContext'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function Footer() {
   const settings = useSettings()
+  const { slug } = useTenant()
 
   return (
     <footer className="bg-white border-t border-gray-100">
@@ -36,21 +38,21 @@ export default function Footer() {
           <div>
             <p className="text-[10px] tracking-widest uppercase font-semibold text-black mb-4">Shop</p>
             <ul className="space-y-2.5">
-              <li><Link href="/collections/kaos-pria" className="text-xs text-gray-500 hover:text-black transition-colors">Kaos Pria</Link></li>
-              <li><Link href="/collections/kaos-wanita" className="text-xs text-gray-500 hover:text-black transition-colors">Kaos Wanita</Link></li>
-              <li><Link href="/collections/celana" className="text-xs text-gray-500 hover:text-black transition-colors">Celana</Link></li>
-              <li><Link href="/collections/aksesoris" className="text-xs text-gray-500 hover:text-black transition-colors">Aksesoris</Link></li>
-              <li><Link href="/collections" className="text-xs text-gray-500 hover:text-black transition-colors">Semua Produk</Link></li>
+              <li><Link href={`/${slug}/collections/kaos-pria`} className="text-xs text-gray-500 hover:text-black transition-colors">Kaos Pria</Link></li>
+              <li><Link href={`/${slug}/collections/kaos-wanita`} className="text-xs text-gray-500 hover:text-black transition-colors">Kaos Wanita</Link></li>
+              <li><Link href={`/${slug}/collections/celana`} className="text-xs text-gray-500 hover:text-black transition-colors">Celana</Link></li>
+              <li><Link href={`/${slug}/collections/aksesoris`} className="text-xs text-gray-500 hover:text-black transition-colors">Aksesoris</Link></li>
+              <li><Link href={`/${slug}/collections`} className="text-xs text-gray-500 hover:text-black transition-colors">Semua Produk</Link></li>
             </ul>
           </div>
 
           <div>
             <p className="text-[10px] tracking-widest uppercase font-semibold text-black mb-4">Info</p>
             <ul className="space-y-2.5">
-              <li><Link href="/about-us" className="text-xs text-gray-500 hover:text-black transition-colors">Tentang Kami</Link></li>
-              <li><Link href="/how-to-buy" className="text-xs text-gray-500 hover:text-black transition-colors">Cara Pembelian</Link></li>
-              <li><Link href="/faq" className="text-xs text-gray-500 hover:text-black transition-colors">FAQ</Link></li>
-              <li><Link href="/contact-us" className="text-xs text-gray-500 hover:text-black transition-colors">Kontak Kami</Link></li>
+              <li><Link href={`/${slug}/about-us`} className="text-xs text-gray-500 hover:text-black transition-colors">Tentang Kami</Link></li>
+              <li><Link href={`/${slug}/how-to-buy`} className="text-xs text-gray-500 hover:text-black transition-colors">Cara Pembelian</Link></li>
+              <li><Link href={`/${slug}/faq`} className="text-xs text-gray-500 hover:text-black transition-colors">FAQ</Link></li>
+              <li><Link href={`/${slug}/contact-us`} className="text-xs text-gray-500 hover:text-black transition-colors">Kontak Kami</Link></li>
             </ul>
           </div>
 
@@ -87,9 +89,9 @@ export default function Footer() {
             © {new Date().getFullYear()} {settings?.storeName || 'FashionKita'}. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
-            <Link href="/how-to-buy" className="text-[11px] text-gray-400 hover:text-black transition-colors">Cara Pembelian</Link>
-            <Link href="/faq" className="text-[11px] text-gray-400 hover:text-black transition-colors">FAQ</Link>
-            <Link href="/contact-us" className="text-[11px] text-gray-400 hover:text-black transition-colors">Kontak</Link>
+            <Link href={`/${slug}/how-to-buy`} className="text-[11px] text-gray-400 hover:text-black transition-colors">Cara Pembelian</Link>
+            <Link href={`/${slug}/faq`} className="text-[11px] text-gray-400 hover:text-black transition-colors">FAQ</Link>
+            <Link href={`/${slug}/contact-us`} className="text-[11px] text-gray-400 hover:text-black transition-colors">Kontak</Link>
           </div>
         </div>
       </div>

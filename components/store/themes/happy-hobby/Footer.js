@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { useSettings } from '@/contexts/SettingsContext'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function HappyHobbyFooter() {
   const settings = useSettings()
+  const { slug } = useTenant()
   const storeName = settings?.storeName || 'MyShop'
 
   return (
@@ -42,10 +44,10 @@ export default function HappyHobbyFooter() {
             <div>
               <p className="font-bold text-sm mb-4" style={{ color: 'var(--color-text)' }}>Belanja</p>
               <ul className="space-y-2.5">
-                <li><Link href="/collections" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Semua Produk</Link></li>
-                <li><Link href="/collections/kaos-pria" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kaos Pria</Link></li>
-                <li><Link href="/collections/kaos-wanita" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kaos Wanita</Link></li>
-                <li><Link href="/collections/celana" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Celana</Link></li>
+                <li><Link href={`/${slug}/collections`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Semua Produk</Link></li>
+                <li><Link href={`/${slug}/collections/kaos-pria`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kaos Pria</Link></li>
+                <li><Link href={`/${slug}/collections/kaos-wanita`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kaos Wanita</Link></li>
+                <li><Link href={`/${slug}/collections/celana`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Celana</Link></li>
               </ul>
             </div>
 
@@ -53,10 +55,10 @@ export default function HappyHobbyFooter() {
             <div>
               <p className="font-bold text-sm mb-4" style={{ color: 'var(--color-text)' }}>Informasi</p>
               <ul className="space-y-2.5">
-                <li><Link href="/about-us" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Tentang Kami</Link></li>
-                <li><Link href="/how-to-buy" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Cara Pembelian</Link></li>
-                <li><Link href="/faq" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">FAQ</Link></li>
-                <li><Link href="/contact-us" className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kontak Kami</Link></li>
+                <li><Link href={`/${slug}/about-us`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Tentang Kami</Link></li>
+                <li><Link href={`/${slug}/how-to-buy`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Cara Pembelian</Link></li>
+                <li><Link href={`/${slug}/faq`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">FAQ</Link></li>
+                <li><Link href={`/${slug}/contact-us`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kontak Kami</Link></li>
               </ul>
             </div>
 
@@ -117,9 +119,9 @@ export default function HappyHobbyFooter() {
             © {new Date().getFullYear()} {storeName}. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            <Link href="/how-to-buy" className="text-xs opacity-80 hover:opacity-100 transition-opacity">Cara Pembelian</Link>
-            <Link href="/faq" className="text-xs opacity-80 hover:opacity-100 transition-opacity">FAQ</Link>
-            <Link href="/contact-us" className="text-xs opacity-80 hover:opacity-100 transition-opacity">Kontak</Link>
+            <Link href={`/${slug}/how-to-buy`} className="text-xs opacity-80 hover:opacity-100 transition-opacity">Cara Pembelian</Link>
+            <Link href={`/${slug}/faq`} className="text-xs opacity-80 hover:opacity-100 transition-opacity">FAQ</Link>
+            <Link href={`/${slug}/contact-us`} className="text-xs opacity-80 hover:opacity-100 transition-opacity">Kontak</Link>
           </div>
         </div>
       </div>

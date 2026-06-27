@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/helpers'
+import { useTenant } from '@/contexts/TenantContext'
 
 const SORT_OPTIONS = [
   { value: 'newest',     label: 'Terbaru' },
@@ -12,14 +13,14 @@ const SORT_OPTIONS = [
   { value: 'name-desc',  label: 'Nama: Z – A' },
 ]
 
-function ProductGridCard({ product }) {
+function ProductGridCard({ product, slug }) {
   const price =
     product.minPrice === product.maxPrice
       ? formatCurrency(product.minPrice)
       : `${formatCurrency(product.minPrice)} – ${formatCurrency(product.maxPrice)}`
 
   return (
-    <Link href={`/products/${product.handle}`} className="group block">
+    <Link href={`/${slug}/products/${product.handle}`} className="group block">
       <div className="relative overflow-hidden bg-stone-100 aspect-[3/4]">
         {product.featuredImage ? (
           <img
@@ -122,6 +123,7 @@ function SortPanel({ open, onClose, sortBy, onSortChange, showInStock, onStockTo
 }
 
 export default function UrbanFashionCollectionDetailPage({ collection, products, loading }) {
+  const { slug } = useTenant()
   const [showInStock, setShowInStock] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
   const [panelOpen, setPanelOpen] = useState(false)
@@ -172,7 +174,7 @@ export default function UrbanFashionCollectionDetailPage({ collection, products,
 
       <div className="max-w-7xl mx-auto px-4">
         <nav className="flex items-center gap-2 py-4 text-xs text-gray-400">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
+          <Link href={`/${slug}`} className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
           <span className="text-black font-medium uppercase tracking-wider">{collection.title}</span>
         </nav>
@@ -253,7 +255,7 @@ export default function UrbanFashionCollectionDetailPage({ collection, products,
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8">
             {filtered.map((product) => (
-              <ProductGridCard key={product.id} product={product} />
+              <ProductGridCard key={product.id} product={product} slug={slug} />
             ))}
           </div>
         </div>

@@ -5,22 +5,24 @@ import Link from 'next/link'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useCart } from '@/store/cartStore'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
-
-const NAV_LINKS = [
-  { href: '/collections', label: 'Semua Produk' },
-  { href: '/about-us', label: 'Tentang Kami' },
-  { href: '/how-to-buy', label: 'Cara Beli' },
-  { href: '/contact-us', label: 'Kontak' },
-]
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function HappyHobbyHeader() {
   const settings = useSettings()
   const { state } = useCart()
   const { customer } = useCustomerAuth() || {}
+  const { slug } = useTenant()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const cartCount = state?.items?.reduce((s, i) => s + i.quantity, 0) || 0
   const storeName = settings?.storeName || 'MyShop'
+
+  const navLinks = [
+    { href: `/${slug}/collections`, label: 'Semua Produk' },
+    { href: `/${slug}/about-us`, label: 'Tentang Kami' },
+    { href: `/${slug}/how-to-buy`, label: 'Cara Beli' },
+    { href: `/${slug}/contact-us`, label: 'Kontak' },
+  ]
 
   return (
     <header className="sticky top-0 z-40">
@@ -36,7 +38,7 @@ export default function HappyHobbyHeader() {
       <div className="bg-white" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
         <div className="max-w-7xl mx-auto px-4 flex items-center h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="font-extrabold text-lg flex-shrink-0" style={{ color: 'var(--color-primary)' }}>
+          <Link href={`/${slug}`} className="font-extrabold text-lg flex-shrink-0" style={{ color: 'var(--color-primary)' }}>
             {settings?.logo ? (
               <img src={settings.logo} alt={storeName} className="h-8 object-contain" />
             ) : (
@@ -46,7 +48,7 @@ export default function HappyHobbyHeader() {
 
           {/* Nav links — desktop */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -70,7 +72,7 @@ export default function HappyHobbyHeader() {
           <div className="flex items-center gap-2 ml-auto md:ml-0">
             {/* Account */}
             <Link
-              href={customer ? '/account' : '/account/login'}
+              href={customer ? `/${slug}/account` : `/${slug}/account/login`}
               className="p-2 rounded-full hover:bg-gray-100 transition-colors"
               title={customer ? `Halo, ${customer.name}` : 'Login'}
             >
@@ -80,7 +82,7 @@ export default function HappyHobbyHeader() {
             </Link>
 
             {/* Cart */}
-            <Link href="/cart" className="relative p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <Link href={`/${slug}/cart`} className="relative p-2 rounded-full hover:bg-gray-100 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-text)' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
@@ -115,7 +117,7 @@ export default function HappyHobbyHeader() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white py-3">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -127,7 +129,7 @@ export default function HappyHobbyHeader() {
               </Link>
             ))}
             <Link
-              href={customer ? '/account' : '/account/login'}
+              href={customer ? `/${slug}/account` : `/${slug}/account/login`}
               onClick={() => setMenuOpen(false)}
               className="block px-6 py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
               style={{ color: 'var(--color-text)' }}

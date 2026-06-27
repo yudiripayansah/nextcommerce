@@ -1,13 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function UrbanFashionCollectionsPage({ collections, loading }) {
+  const { slug } = useTenant()
   return (
     <div className="bg-white">
       <div className="max-w-7xl mx-auto px-4">
         <nav className="flex items-center gap-2 py-4 text-xs text-gray-400">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
+          <Link href={`/${slug}`} className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
           <span className="text-black font-medium uppercase tracking-wider">Koleksi</span>
         </nav>
@@ -39,7 +41,7 @@ export default function UrbanFashionCollectionsPage({ collections, loading }) {
             {collections.map((col) => (
               <Link
                 key={col.id}
-                href={`/collections/${col.handle}`}
+                href={`/${slug}/collections/${col.handle}`}
                 className="group block"
               >
                 <div className="relative overflow-hidden bg-stone-100 aspect-[3/4]">

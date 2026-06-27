@@ -4,48 +4,19 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
-
-const navItems = [
-  {
-    href: '/account',
-    label: 'Akun Saya',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-  },
-  {
-    href: '/account/orders',
-    label: 'Riwayat Pesanan',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-  },
-  {
-    href: '/account/addresses',
-    label: 'Buku Alamat',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-]
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function AccountLayout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const { customerUser, customer, loading, logout } = useCustomerAuth()
+  const { slug } = useTenant()
 
   useEffect(() => {
     if (!loading && !customerUser) {
-      router.replace('/account/login')
+      router.replace(`/${slug}/account/login`)
     }
-  }, [loading, customerUser, router])
+  }, [loading, customerUser, router, slug])
 
   if (loading || !customerUser) {
     return (
@@ -55,14 +26,45 @@ export default function AccountLayout({ children }) {
     )
   }
 
+  const navItems = [
+    {
+      href: `/${slug}/account`,
+      label: 'Akun Saya',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
+    {
+      href: `/${slug}/account/orders`,
+      label: 'Riwayat Pesanan',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      ),
+    },
+    {
+      href: `/${slug}/account/addresses`,
+      label: 'Buku Alamat',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+    },
+  ]
+
   const isActive = (href) => {
-    if (href === '/account') return pathname === '/account'
+    if (href === `/${slug}/account`) return pathname === `/${slug}/account`
     return pathname.startsWith(href)
   }
 
   async function handleLogout() {
     await logout()
-    router.push('/')
+    router.push(`/${slug}`)
   }
 
   return (

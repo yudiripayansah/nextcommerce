@@ -17,7 +17,7 @@ export function TenantProvider({ slug, children }) {
   }, [slug])
 
   return (
-    <TenantContext.Provider value={{ tenant, loading }}>
+    <TenantContext.Provider value={{ tenant, loading, slug }}>
       {children}
     </TenantContext.Provider>
   )

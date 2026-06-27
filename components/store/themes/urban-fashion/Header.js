@@ -6,23 +6,25 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/store/cartStore'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
-
-const navLinks = [
-  { href: '/collections/kaos-pria', label: 'Pria' },
-  { href: '/collections/kaos-wanita', label: 'Wanita' },
-  { href: '/collections/celana', label: 'Celana' },
-  { href: '/collections/aksesoris', label: 'Aksesoris' },
-]
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function UrbanFashionHeader() {
   const { totalItems } = useCart()
   const settings = useSettings()
   const { customerUser } = useCustomerAuth()
+  const { slug } = useTenant()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const searchInputRef = useRef(null)
+
+  const navLinks = [
+    { href: `/${slug}/collections/kaos-pria`, label: 'Pria' },
+    { href: `/${slug}/collections/kaos-wanita`, label: 'Wanita' },
+    { href: `/${slug}/collections/celana`, label: 'Celana' },
+    { href: `/${slug}/collections/aksesoris`, label: 'Aksesoris' },
+  ]
 
   function openSearch() {
     setMenuOpen(false)
@@ -40,7 +42,7 @@ export default function UrbanFashionHeader() {
     const q = searchQuery.trim()
     if (!q) return
     closeSearch()
-    router.push(`/search?q=${encodeURIComponent(q)}`)
+    router.push(`/${slug}/search?q=${encodeURIComponent(q)}`)
   }
 
   return (
@@ -67,7 +69,7 @@ export default function UrbanFashionHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/collections" className="text-xs tracking-widest uppercase text-gray-700 hover:text-black transition-colors">
+            <Link href={`/${slug}/collections`} className="text-xs tracking-widest uppercase text-gray-700 hover:text-black transition-colors">
               Semua
             </Link>
           </nav>
@@ -84,7 +86,7 @@ export default function UrbanFashionHeader() {
           </button>
 
           {/* Center: Logo */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
+          <Link href={`/${slug}`} className="absolute left-1/2 -translate-x-1/2">
             {settings?.logo ? (
               <img src={settings.logo} alt={settings.storeName} className="h-7 object-contain" />
             ) : (
@@ -96,7 +98,7 @@ export default function UrbanFashionHeader() {
 
           {/* Right: icons */}
           <div className="flex items-center gap-3">
-            <Link href="/about-us" className="hidden md:block text-xs tracking-widest uppercase text-gray-700 hover:text-black transition-colors">
+            <Link href={`/${slug}/about-us`} className="hidden md:block text-xs tracking-widest uppercase text-gray-700 hover:text-black transition-colors">
               Tentang
             </Link>
 
@@ -111,12 +113,12 @@ export default function UrbanFashionHeader() {
               </svg>
             </button>
 
-            <Link href={customerUser ? '/account' : '/account/login'} className="p-1" aria-label="Akun">
+            <Link href={customerUser ? `/${slug}/account` : `/${slug}/account/login`} className="p-1" aria-label="Akun">
               <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </Link>
-            <Link href="/cart" className="relative p-1" aria-label="Cart">
+            <Link href={`/${slug}/cart`} className="relative p-1" aria-label="Cart">
               <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
@@ -178,10 +180,10 @@ export default function UrbanFashionHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/collections" onClick={() => setMenuOpen(false)} className="block text-xs tracking-widest uppercase text-gray-700">
+            <Link href={`/${slug}/collections`} onClick={() => setMenuOpen(false)} className="block text-xs tracking-widest uppercase text-gray-700">
               Semua
             </Link>
-            <Link href="/about-us" onClick={() => setMenuOpen(false)} className="block text-xs tracking-widest uppercase text-gray-700">
+            <Link href={`/${slug}/about-us`} onClick={() => setMenuOpen(false)} className="block text-xs tracking-widest uppercase text-gray-700">
               Tentang Kami
             </Link>
             <button

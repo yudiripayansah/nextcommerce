@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import ProductCard from './ProductCard'
+import { useTenant } from '@/contexts/TenantContext'
 
 const FEATURES = [
   {
@@ -22,6 +23,7 @@ const FEATURES = [
 ]
 
 export default function HappyHobbyHomePage({ products, collections }) {
+  const { slug } = useTenant()
   return (
     <div style={{ background: 'var(--color-bg)' }}>
 
@@ -49,14 +51,14 @@ export default function HappyHobbyHomePage({ products, collections }) {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <Link
-                  href="/collections"
+                  href={`/${slug}/collections`}
                   className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold transition-opacity hover:opacity-90"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)', borderRadius: 'var(--tm-radius-pill)' }}
                 >
                   Belanja Sekarang →
                 </Link>
                 <Link
-                  href="/how-to-buy"
+                  href={`/${slug}/how-to-buy`}
                   className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold border-2 transition-colors hover:opacity-80"
                   style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)', background: 'transparent', borderRadius: 'var(--tm-radius-pill)' }}
                 >
@@ -71,7 +73,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
                 {collections.slice(0, 4).map((col, i) => (
                   <Link
                     key={col.id}
-                    href={`/collections/${col.handle}`}
+                    href={`/${slug}/collections/${col.handle}`}
                     className={`group relative overflow-hidden ${i === 0 ? 'row-span-2' : ''}`}
                     style={{ borderRadius: 'var(--tm-radius-lg)', aspectRatio: i === 0 ? '3/4' : '1/1' }}
                   >
@@ -106,7 +108,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
                 Belanja Berdasarkan Kategori
               </h2>
               <Link
-                href="/collections"
+                href={`/${slug}/collections`}
                 className="text-sm font-bold transition-opacity hover:opacity-70"
                 style={{ color: 'var(--color-primary)' }}
               >
@@ -117,7 +119,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
               {collections.map((col) => (
                 <Link
                   key={col.id}
-                  href={`/collections/${col.handle}`}
+                  href={`/${slug}/collections/${col.handle}`}
                   className="group block relative overflow-hidden aspect-square"
                   style={{ borderRadius: 'var(--tm-radius-lg)', boxShadow: 'var(--tm-card-shadow)' }}
                 >
@@ -150,7 +152,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
                 🔥 Produk Terpopuler
               </h2>
               <Link
-                href="/collections"
+                href={`/${slug}/collections`}
                 className="text-sm font-bold transition-opacity hover:opacity-70"
                 style={{ color: 'var(--color-primary)' }}
               >
@@ -191,7 +193,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
             Untuk setiap pembelian di atas Rp200.000. Pesan sekarang, dikirim hari ini!
           </p>
           <Link
-            href="/collections"
+            href={`/${slug}/collections`}
             className="inline-flex items-center gap-2 px-8 py-4 text-sm font-extrabold transition-opacity hover:opacity-90"
             style={{ background: 'var(--color-primary-fg)', color: 'var(--color-primary)', borderRadius: 'var(--tm-radius-pill)' }}
           >

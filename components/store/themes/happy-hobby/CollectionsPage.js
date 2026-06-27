@@ -1,15 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function HappyHobbyCollectionsPage({ collections, loading }) {
+  const { slug } = useTenant()
   return (
     <div style={{ background: 'var(--color-bg)' }}>
       {/* Header */}
       <div style={{ background: 'var(--color-surface)' }} className="py-10">
         <div className="max-w-7xl mx-auto px-4">
           <nav className="flex items-center gap-2 text-xs text-gray-400 mb-3">
-            <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
+            <Link href={`/${slug}`} className="hover:text-gray-600 transition-colors">Home</Link>
             <span>/</span>
             <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>Koleksi</span>
           </nav>
@@ -46,7 +48,7 @@ export default function HappyHobbyCollectionsPage({ collections, loading }) {
             {collections.map((col) => (
               <Link
                 key={col.id}
-                href={`/collections/${col.handle}`}
+                href={`/${slug}/collections/${col.handle}`}
                 className="group block"
                 style={{ borderRadius: 'var(--tm-radius-lg)', overflow: 'hidden', background: '#fff', boxShadow: 'var(--tm-card-shadow)', transition: 'box-shadow 0.2s, transform 0.2s' }}
                 onMouseEnter={e => {

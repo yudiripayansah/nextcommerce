@@ -1,14 +1,18 @@
+'use client'
+
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/helpers'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function HappyHobbyProductCard({ product }) {
+  const { slug } = useTenant()
   const price =
     product.minPrice === product.maxPrice
       ? formatCurrency(product.minPrice)
       : `${formatCurrency(product.minPrice)} – ${formatCurrency(product.maxPrice)}`
 
   return (
-    <Link href={`/products/${product.handle}`} className="group block" style={{ borderRadius: 'var(--tm-radius)', overflow: 'hidden', background: '#fff', boxShadow: 'var(--tm-card-shadow)', transition: 'box-shadow 0.2s' }}
+    <Link href={`/${slug}/products/${product.handle}`} className="group block" style={{ borderRadius: 'var(--tm-radius)', overflow: 'hidden', background: '#fff', boxShadow: 'var(--tm-card-shadow)', transition: 'box-shadow 0.2s' }}
       onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--tm-card-hover-shadow)'}
       onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--tm-card-shadow)'}
     >

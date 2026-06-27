@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import ProductCard from './ProductCard'
+import { useTenant } from '@/contexts/TenantContext'
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&q=85'
 const SUSTAINABILITY_IMAGE = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80'
@@ -38,6 +39,7 @@ const FEATURES = [
 ]
 
 export default function UrbanFashionHomePage({ products, collections }) {
+  const { slug } = useTenant()
   return (
     <div className="bg-white">
 
@@ -56,13 +58,13 @@ export default function UrbanFashionHomePage({ products, collections }) {
           </h1>
           <div className="flex gap-4">
             <Link
-              href="/collections/kaos-pria"
+              href={`/${slug}/collections/kaos-pria`}
               className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white border-b border-white pb-0.5 hover:opacity-70 transition-opacity"
             >
               Shop Pria <span>›</span>
             </Link>
             <Link
-              href="/collections/kaos-wanita"
+              href={`/${slug}/collections/kaos-wanita`}
               className="inline-flex items-center gap-2 text-xs tracking-widest uppercase text-white border-b border-white pb-0.5 hover:opacity-70 transition-opacity"
             >
               Shop Wanita <span>›</span>
@@ -78,7 +80,7 @@ export default function UrbanFashionHomePage({ products, collections }) {
             {collections.slice(0, 4).map((col) => (
               <Link
                 key={col.id}
-                href={`/collections/${col.handle}`}
+                href={`/${slug}/collections/${col.handle}`}
                 className="group relative overflow-hidden aspect-[3/4]"
               >
                 <img
@@ -105,7 +107,7 @@ export default function UrbanFashionHomePage({ products, collections }) {
               <h2 className="font-serif text-2xl md:text-3xl text-black">Produk Terbaru</h2>
             </div>
             <Link
-              href="/collections"
+              href={`/${slug}/collections`}
               className="text-xs tracking-widest uppercase pb-0.5 hover:opacity-60 transition-opacity"
               style={{ color: 'var(--color-primary)', borderBottom: '1px solid var(--color-primary)' }}
             >
@@ -132,7 +134,7 @@ export default function UrbanFashionHomePage({ products, collections }) {
           <div className="absolute bottom-8 left-8">
             <p className="text-xs tracking-widest uppercase text-white/70 mb-2">Koleksi Wanita</p>
             <Link
-              href="/collections/kaos-wanita"
+              href={`/${slug}/collections/kaos-wanita`}
               className="inline-flex items-center gap-2 text-sm text-white border-b border-white pb-0.5 tracking-wider uppercase hover:opacity-70 transition-opacity"
             >
               Shop Now ›
@@ -149,7 +151,7 @@ export default function UrbanFashionHomePage({ products, collections }) {
           <div className="absolute bottom-8 left-8">
             <p className="text-xs tracking-widest uppercase text-white/70 mb-2">Koleksi Pria</p>
             <Link
-              href="/collections/kaos-pria"
+              href={`/${slug}/collections/kaos-pria`}
               className="inline-flex items-center gap-2 text-sm text-white border-b border-white pb-0.5 tracking-wider uppercase hover:opacity-70 transition-opacity"
             >
               Shop Now ›
@@ -172,7 +174,7 @@ export default function UrbanFashionHomePage({ products, collections }) {
             Kami berkomitmen menghadirkan pakaian berkualitas tinggi yang nyaman dipakai sehari-hari, dengan harga terjangkau langsung dari produsen untuk Anda.
           </p>
           <Link
-            href="/about-us"
+            href={`/${slug}/about-us`}
             className="text-xs tracking-widest uppercase border border-white text-white px-8 py-3 hover:bg-white hover:text-black transition-colors"
           >
             Learn More
@@ -196,7 +198,7 @@ export default function UrbanFashionHomePage({ products, collections }) {
               Setiap helai kain dipilih dengan cermat untuk memastikan kenyamanan dan ketahanan jangka panjang. Fashion yang baik tidak harus mahal.
             </p>
             <Link
-              href="/how-to-buy"
+              href={`/${slug}/how-to-buy`}
               className="text-xs tracking-widest uppercase pb-0.5 hover:opacity-60 transition-opacity"
               style={{ color: 'var(--color-primary)', borderBottom: '1px solid var(--color-primary)' }}
             >

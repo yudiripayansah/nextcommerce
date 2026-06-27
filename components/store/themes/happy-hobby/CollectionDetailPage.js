@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import ProductCard from './ProductCard'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function HappyHobbyCollectionDetailPage({ collection, products, loading }) {
+  const { slug } = useTenant()
   const [showInStock, setShowInStock] = useState(false)
   const filtered = showInStock ? products.filter(p => (p.totalStock || 0) > 0) : products
 
@@ -40,7 +42,7 @@ export default function HappyHobbyCollectionDetailPage({ collection, products, l
         <p className="text-5xl mb-4">🔍</p>
         <p className="text-gray-500">Koleksi tidak ditemukan.</p>
         <Link
-          href="/collections"
+          href={`/${slug}/collections`}
           className="inline-block mt-4 text-sm font-bold"
           style={{ color: 'var(--color-primary)' }}
         >
@@ -65,9 +67,9 @@ export default function HappyHobbyCollectionDetailPage({ collection, products, l
       <div style={{ background: 'var(--color-surface)' }} className="py-7">
         <div className="max-w-7xl mx-auto px-4">
           <nav className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-            <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
+            <Link href={`/${slug}`} className="hover:text-gray-600 transition-colors">Home</Link>
             <span>/</span>
-            <Link href="/collections" className="hover:text-gray-600 transition-colors">Koleksi</Link>
+            <Link href={`/${slug}/collections`} className="hover:text-gray-600 transition-colors">Koleksi</Link>
             <span>/</span>
             <span className="font-semibold" style={{ color: 'var(--color-primary)' }}>{collection.title}</span>
           </nav>

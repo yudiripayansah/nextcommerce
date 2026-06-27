@@ -2,15 +2,17 @@
 
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/helpers'
+import { useTenant } from '@/contexts/TenantContext'
 
 export default function ProductCard({ product }) {
+  const { slug } = useTenant()
   const price =
     product.minPrice === product.maxPrice
       ? formatCurrency(product.minPrice)
       : `${formatCurrency(product.minPrice)} – ${formatCurrency(product.maxPrice)}`
 
   return (
-    <Link href={`/products/${product.handle}`} className="group block">
+    <Link href={`/${slug}/products/${product.handle}`} className="group block">
       <div className="relative overflow-hidden bg-stone-100 aspect-[3/4]">
         {product.featuredImage ? (
           <img
