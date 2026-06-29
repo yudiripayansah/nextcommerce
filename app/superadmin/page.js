@@ -156,7 +156,6 @@ export default function SuperadminPage() {
       return
     }
     getTenants().then(setTenants).finally(() => setLoading(false))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, router])
 
   function handleCreated({ tenantId, slug }) {

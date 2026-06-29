@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { sanitizeText, sanitizePhone, isValidWhatsApp } from '@/lib/sanitize'
 
 export default function AccountRegisterPage() {
   const { tenant: tenantSlug } = useParams()
@@ -15,7 +16,7 @@ export default function AccountRegisterPage() {
 
   useEffect(() => {
     if (customerUser) router.replace(`/${tenantSlug}/account`)
-  }, [customerUser, tenantSlug])
+  }, [customerUser, tenantSlug, router])
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -24,14 +25,32 @@ export default function AccountRegisterPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (form.password !== form.confirm) { setError('Password dan konfirmasi tidak sama.'); return }
-    if (form.password.length < 6) { setError('Password minimal 6 karakter.'); return }
+
+    const name = sanitizeText(form.name, 100)
+    const email = form.email.trim().toLowerCase()
+    const whatsapp = sanitizePhone(form.whatsapp)
+    const { password, confirm } = form
+
+    if (!name) { setError('Nama tidak boleh kosong.'); return }
+    if (name.length < 2) { setError('Nama minimal 2 karakter.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Format email tidak valid.'); return }
+    if (whatsapp && !isValidWhatsApp(whatsapp)) {
+      setError('Nomor WhatsApp tidak valid. Gunakan format 08xx atau 628xx.')
+      return
+    }
+    if (password.length < 8) { setError('Password minimal 8 karakter.'); return }
+    if (password !== confirm) { setError('Password dan konfirmasi tidak sama.'); return }
+    // Reject passwords that are all the same character
+    if (/^(.)\1+$/.test(password)) { setError('Password terlalu sederhana.'); return }
+
     setLoading(true)
     try {
-      await signUp(form.email, form.password, form.name, form.whatsapp)
+      await signUp(email, password, name, whatsapp)
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {
         setError('Email sudah terdaftar. Silakan masuk.')
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password terlalu lemah. Gunakan kombinasi huruf dan angka.')
       } else {
         setError('Gagal mendaftar. Coba lagi.')
       }
@@ -51,19 +70,25 @@ export default function AccountRegisterPage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             {[
-              { field: 'name', label: 'Nama Lengkap', type: 'text', placeholder: 'Nama Anda' },
-              { field: 'email', label: 'Email', type: 'email', placeholder: 'email@contoh.com' },
-              { field: 'whatsapp', label: 'Nomor WhatsApp', type: 'tel', placeholder: '08xxxxxxxxxx', optional: true },
-              { field: 'password', label: 'Password', type: 'password', placeholder: 'Min. 6 karakter' },
-              { field: 'confirm', label: 'Konfirmasi Password', type: 'password', placeholder: 'Ulangi password' },
-            ].map(({ field, label, type, placeholder, optional }) => (
+              { field: 'name', label: 'Nama Lengkap', type: 'text', placeholder: 'Nama Anda', autoComplete: 'name' },
+              { field: 'email', label: 'Email', type: 'email', placeholder: 'email@contoh.com', autoComplete: 'email' },
+              { field: 'whatsapp', label: 'Nomor WhatsApp', type: 'tel', placeholder: '08xxxxxxxxxx', optional: true, autoComplete: 'tel' },
+              { field: 'password', label: 'Password', type: 'password', placeholder: 'Min. 8 karakter', autoComplete: 'new-password' },
+              { field: 'confirm', label: 'Konfirmasi Password', type: 'password', placeholder: 'Ulangi password', autoComplete: 'new-password' },
+            ].map(({ field, label, type, placeholder, optional, autoComplete }) => (
               <div key={field}>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {label} {optional && <span className="text-gray-400 font-normal">(opsional)</span>}
                 </label>
-                <input type={type} value={form[field]} onChange={(e) => set(field, e.target.value)} required={!optional}
+                <input
+                  type={type}
+                  value={form[field]}
+                  onChange={(e) => set(field, e.target.value)}
+                  required={!optional}
+                  autoComplete={autoComplete}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  placeholder={placeholder} />
+                  placeholder={placeholder}
+                />
               </div>
             ))}
 
