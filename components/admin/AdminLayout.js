@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Sidebar from './Sidebar'
 import LoadingSpinner from '../ui/LoadingSpinner'
+import ServiceWorkerRegistrar from '../store/ServiceWorkerRegistrar'
 
 export default function AdminLayout({ children, title }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -26,6 +27,8 @@ export default function AdminLayout({ children, title }) {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <ServiceWorkerRegistrar />
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div

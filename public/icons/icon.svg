@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#111827"/>
+  <!-- Shopping bag -->
+  <path d="M176 224v-48a80 80 0 1 1 160 0v48" stroke="#ffffff" stroke-width="24" stroke-linecap="round" fill="none"/>
+  <rect x="128" y="224" width="256" height="192" rx="20" fill="#ffffff"/>
+  <circle cx="200" cy="304" r="16" fill="#111827"/>
+  <circle cx="312" cy="304" r="16" fill="#111827"/>
+</svg>

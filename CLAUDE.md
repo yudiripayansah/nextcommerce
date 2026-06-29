@@ -621,6 +621,44 @@ Features:
 
 ---
 
+# PWA & Push Notifications
+
+## PWA Setup
+
+- `public/manifest.json` — default generic manifest
+- `public/icons/icon.svg` — default app icon (replace with store logo)
+- `public/icons/badge.svg` — badge for notifications
+- `next.config.js` rewrites `/firebase-messaging-sw.js` → `/api/firebase-messaging-sw`
+- `app/api/firebase-messaging-sw/route.js` — serves FCM service worker with Firebase config injected from env vars
+- `app/[tenant]/layout.js` generates manifest link: `/api/manifest/{slug}` per tenant
+- `app/api/manifest/[slug]/route.js` — returns per-tenant manifest with store name and theme color from Firestore
+- `components/store/ServiceWorkerRegistrar.js` — registers the SW on store AND admin pages
+- `components/store/PWAInstallPrompt.js` — shows install prompt popup after 3s on store pages; `beforeinstallprompt` for Android, manual instructions for iOS
+
+## Push Notifications (Firebase Cloud Messaging)
+
+**Admin subscribes:**
+1. Admin visits dashboard → sees "Aktifkan Notifikasi" banner
+2. Clicks → browser requests permission → FCM token obtained via `lib/fcm.js → requestFCMToken()`
+3. Token saved via POST `/api/push-subscribe` (verifies admin ID token) → stored at `users/{uid}.fcmToken`
+4. Auto-resubscribes silently on next login if permission already granted
+
+**Customer creates order → admin notified:**
+1. `WhatsAppOrderButton` creates order → fire-and-forget POST `/api/push-notify`
+2. Route looks up `tenants/{tenantId}.ownerUid` → `users/{ownerUid}.fcmToken`
+3. Sends FCM message via `firebase-admin/messaging` → `getMessaging(adminApp).send()`
+4. FCM SW (`firebase-messaging-sw.js`) shows notification; click opens `/admin/orders`
+
+## Required Env Vars
+
+```env
+# Firebase Cloud Messaging VAPID key
+# Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=
+```
+
+---
+
 # Out Of Scope
 
 Do NOT implement: Payment Gateway, Checkout, Shipping, Wishlist, Reviews, Blog, Multi-Vendor, Multi-Language, Affiliate, Subscription.

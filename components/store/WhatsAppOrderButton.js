@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/store/cartStore'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useTenant } from '@/contexts/TenantContext'
 import { createOrder } from '@/services/orders'
 import { upsertCustomer } from '@/services/customers'
 import { buildWhatsAppMessage, generateOrderNumber } from '@/lib/helpers'
@@ -11,13 +12,13 @@ import { buildWhatsAppMessage, generateOrderNumber } from '@/lib/helpers'
 export default function WhatsAppOrderButton({ settings }) {
   const { cart, totalItems, totalAmount, dispatch } = useCart()
   const { customerUser, customer } = useCustomerAuth()
+  const { tenant } = useTenant()
   const [step, setStep] = useState('form')
   const [name, setName] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
 
-  // Pre-fill from customer profile if logged in
   useEffect(() => {
     if (customer) {
       setName(customer.name || '')
@@ -31,11 +32,16 @@ export default function WhatsAppOrderButton({ settings }) {
       setError('Nama dan nomor WhatsApp wajib diisi')
       return
     }
+    if (!tenant?.id) {
+      setError('Toko tidak ditemukan')
+      return
+    }
     setError('')
     setStep('loading')
 
     try {
       const orderNumber = generateOrderNumber()
+      const tenantId = tenant.id
       const items = cart.items.map((i) => ({
         productId: i.productId,
         productTitle: i.productTitle,
@@ -45,12 +51,11 @@ export default function WhatsAppOrderButton({ settings }) {
         subtotal: i.subtotal,
       }))
 
-      // If logged in, use UID as customerId; otherwise upsert by WhatsApp
       const customerId = customerUser
         ? customerUser.uid
-        : await upsertCustomer(name, whatsapp, totalAmount)
+        : await upsertCustomer(tenantId, name, whatsapp, totalAmount)
 
-      await createOrder({
+      await createOrder(tenantId, {
         orderNumber,
         customerId,
         customerName: name,
@@ -61,6 +66,13 @@ export default function WhatsAppOrderButton({ settings }) {
         totalAmount,
         status: 'new',
       })
+
+      // Fire-and-forget push notification to admin
+      fetch('/api/push-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, orderNumber, customerName: name, totalAmount }),
+      }).catch(() => {})
 
       dispatch({ type: 'CLEAR' })
 
@@ -78,11 +90,10 @@ export default function WhatsAppOrderButton({ settings }) {
 
   return (
     <form onSubmit={handleOrder} className="space-y-3">
-      {/* Login nudge for guest */}
       {!customerUser && (
         <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-          <Link href="/account/login" className="text-black font-medium hover:underline">Masuk</Link> atau{' '}
-          <Link href="/account/register" className="text-black font-medium hover:underline">daftar</Link>{' '}
+          <Link href="account/login" className="text-black font-medium hover:underline">Masuk</Link> atau{' '}
+          <Link href="account/register" className="text-black font-medium hover:underline">daftar</Link>{' '}
           untuk mengisi otomatis dan menyimpan riwayat pesanan.
         </p>
       )}

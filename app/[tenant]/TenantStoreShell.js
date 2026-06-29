@@ -8,6 +8,8 @@ import { CartProvider } from '@/store/cartStore'
 import Header from '@/components/store/Header'
 import Footer from '@/components/store/Footer'
 import FaviconSync from '@/components/store/FaviconSync'
+import PWAInstallPrompt from '@/components/store/PWAInstallPrompt'
+import ServiceWorkerRegistrar from '@/components/store/ServiceWorkerRegistrar'
 
 function StoreShellInner({ slug, children }) {
   const { tenant, loading } = useTenant()
@@ -28,12 +30,14 @@ function StoreShellInner({ slug, children }) {
       <SettingsProvider tenantId={tenant?.id}>
         <CustomerAuthProvider tenantId={tenant?.id}>
           <ThemeProvider>
+            <ServiceWorkerRegistrar />
             <FaviconSync />
             <div id="store-shell" className="min-h-screen flex flex-col" style={{ background: 'var(--color-bg)' }}>
               <Header />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <PWAInstallPrompt />
           </ThemeProvider>
         </CustomerAuthProvider>
       </SettingsProvider>
