@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import AdminLayout from '@/components/admin/AdminLayout'
 import MediaPicker from '@/components/admin/MediaPicker'
 import { useAuth } from '@/contexts/AuthContext'
@@ -194,7 +195,7 @@ export default function ContentPage() {
                   className="input"
                 />
               </Field>
-              <p className="text-xs text-gray-400">Contoh: "Gratis Ongkir Min. Rp200.000 • Chat WA untuk info produk"</p>
+              <p className="text-xs text-gray-400">Contoh: &quot;Gratis Ongkir Min. Rp200.000 • Chat WA untuk info produk&quot;</p>
             </Section>
           </div>
         )}
@@ -389,7 +390,7 @@ export default function ContentPage() {
             </Section>
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
               Untuk mengubah info lain di footer (alamat, nomor WA, media sosial, rekening bank), buka halaman{' '}
-              <a href="/admin/settings" className="font-semibold underline">Pengaturan</a>.
+              <Link href="/admin/settings" className="font-semibold underline">Pengaturan</Link>.
             </div>
           </div>
         )}
