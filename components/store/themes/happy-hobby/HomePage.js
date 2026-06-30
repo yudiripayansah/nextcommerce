@@ -3,27 +3,29 @@
 import Link from 'next/link'
 import ProductCard from './ProductCard'
 import { useTenant } from '@/contexts/TenantContext'
-
-const FEATURES = [
-  {
-    emoji: '🚀',
-    title: 'Pengiriman Cepat',
-    desc: 'Pesanan diproses dalam 1x24 jam ke seluruh Indonesia',
-  },
-  {
-    emoji: '🔄',
-    title: 'Tukar Ukuran 7 Hari',
-    desc: 'Tidak pas? Tukar ukuran gratis dalam 7 hari setelah terima',
-  },
-  {
-    emoji: '✅',
-    title: 'Kualitas Terjamin',
-    desc: 'Setiap produk dicek kualitasnya sebelum dikirim ke kamu',
-  },
-]
+import { useSettings } from '@/contexts/SettingsContext'
 
 export default function HappyHobbyHomePage({ products, collections }) {
   const { slug } = useTenant()
+  const settings = useSettings()
+  const c = settings?.content || {}
+
+  const heroBadge = c.hero?.badge || '✨ Koleksi Terbaru'
+  const heroTitle = c.hero?.title || 'Temukan Produk Yang Kamu Suka'
+  const heroSubtitle = c.hero?.subtitle || 'Pilihan lengkap dengan kualitas terbaik, langsung dari produsen ke tanganmu.'
+  const heroCta = c.hero?.ctaText || 'Belanja Sekarang'
+  const collectionsTitle = c.collectionsTitle || 'Belanja Berdasarkan Kategori'
+  const productsTitle = c.productsTitle || '🔥 Produk Terpopuler'
+  const promoTitle = c.promo?.title || 'Gratis Ongkir Seluruh Indonesia!'
+  const promoText = c.promo?.text || 'Untuk setiap pembelian di atas Rp200.000. Pesan sekarang, dikirim hari ini!'
+  const promoCta = c.promo?.ctaText || 'Mulai Belanja Sekarang'
+
+  const features = c.features?.length === 3 ? c.features : [
+    { icon: '🚀', title: 'Pengiriman Cepat', desc: 'Pesanan diproses dalam 1x24 jam ke seluruh Indonesia' },
+    { icon: '🔄', title: 'Tukar Ukuran 7 Hari', desc: 'Tidak pas? Tukar ukuran gratis dalam 7 hari setelah terima' },
+    { icon: '✅', title: 'Kualitas Terjamin', desc: 'Setiap produk dicek kualitasnya sebelum dikirim ke kamu' },
+  ]
+
   return (
     <div style={{ background: 'var(--color-bg)' }}>
 
@@ -37,17 +39,24 @@ export default function HappyHobbyHomePage({ products, collections }) {
                 className="inline-block text-xs font-bold tracking-widest uppercase px-4 py-1.5 mb-5"
                 style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)', borderRadius: 'var(--tm-radius-pill)' }}
               >
-                ✨ Koleksi Terbaru
+                {heroBadge}
               </span>
               <h1
                 className="text-4xl md:text-5xl xl:text-6xl font-extrabold leading-tight mb-5"
                 style={{ color: 'var(--color-text)' }}
               >
-                Temukan Produk<br />
-                <span style={{ color: 'var(--color-primary)' }}>Yang Kamu Suka</span>
+                {heroTitle.includes('\n')
+                  ? heroTitle.split('\n').map((line, i) => (
+                      <span key={i}>
+                        {i > 0 && <br />}
+                        {i === 1 ? <span style={{ color: 'var(--color-primary)' }}>{line}</span> : line}
+                      </span>
+                    ))
+                  : <><span>{heroTitle.split(' ').slice(0, Math.ceil(heroTitle.split(' ').length / 2)).join(' ')}</span><br /><span style={{ color: 'var(--color-primary)' }}>{heroTitle.split(' ').slice(Math.ceil(heroTitle.split(' ').length / 2)).join(' ')}</span></>
+                }
               </h1>
               <p className="text-base text-gray-500 mb-8 max-w-md mx-auto md:mx-0">
-                Pilihan lengkap dengan kualitas terbaik, langsung dari produsen ke tanganmu.
+                {heroSubtitle}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <Link
@@ -55,7 +64,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
                   className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold transition-opacity hover:opacity-90"
                   style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)', borderRadius: 'var(--tm-radius-pill)' }}
                 >
-                  Belanja Sekarang →
+                  {heroCta} →
                 </Link>
                 <Link
                   href={`/${slug}/how-to-buy`}
@@ -105,7 +114,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-extrabold" style={{ color: 'var(--color-text)' }}>
-                Belanja Berdasarkan Kategori
+                {collectionsTitle}
               </h2>
               <Link
                 href={`/${slug}/collections`}
@@ -149,7 +158,7 @@ export default function HappyHobbyHomePage({ products, collections }) {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-extrabold" style={{ color: 'var(--color-text)' }}>
-                🔥 Produk Terpopuler
+                {productsTitle}
               </h2>
               <Link
                 href={`/${slug}/collections`}
@@ -184,20 +193,20 @@ export default function HappyHobbyHomePage({ products, collections }) {
             className="text-3xl md:text-4xl font-extrabold mb-3"
             style={{ color: 'var(--color-primary-fg)' }}
           >
-            Gratis Ongkir Seluruh Indonesia!
+            {promoTitle}
           </h2>
           <p
             className="text-base mb-8"
             style={{ color: 'var(--color-primary-fg)', opacity: 0.85 }}
           >
-            Untuk setiap pembelian di atas Rp200.000. Pesan sekarang, dikirim hari ini!
+            {promoText}
           </p>
           <Link
             href={`/${slug}/collections`}
             className="inline-flex items-center gap-2 px-8 py-4 text-sm font-extrabold transition-opacity hover:opacity-90"
             style={{ background: 'var(--color-primary-fg)', color: 'var(--color-primary)', borderRadius: 'var(--tm-radius-pill)' }}
           >
-            Mulai Belanja Sekarang →
+            {promoCta} →
           </Link>
         </div>
       </section>
@@ -206,13 +215,13 @@ export default function HappyHobbyHomePage({ products, collections }) {
       <section className="py-12 md:py-16">
         <div className="max-w-5xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
+            {features.map((f, i) => (
               <div
-                key={f.title}
+                key={i}
                 className="flex items-start gap-4 p-5"
                 style={{ background: 'var(--color-surface)', borderRadius: 'var(--tm-radius-lg)' }}
               >
-                <span className="text-3xl flex-shrink-0">{f.emoji}</span>
+                <span className="text-3xl flex-shrink-0">{f.icon}</span>
                 <div>
                   <p className="font-bold text-sm mb-1" style={{ color: 'var(--color-text)' }}>{f.title}</p>
                   <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>

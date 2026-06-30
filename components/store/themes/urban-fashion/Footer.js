@@ -25,9 +25,12 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
 
           <div className="col-span-2 md:col-span-1">
-            <p className="text-sm font-semibold tracking-[0.2em] uppercase mb-4" style={headingStyle}>
+            <p className="text-sm font-semibold tracking-[0.2em] uppercase mb-2" style={headingStyle}>
               {settings?.storeName || 'Store'}
             </p>
+            {settings?.content?.footerTagline && (
+              <p className="text-xs leading-relaxed mb-3" style={mutedStyle}>{settings.content.footerTagline}</p>
+            )}
             {settings?.address && (
               <p className="text-xs leading-relaxed mb-3" style={mutedStyle}>{settings.address}</p>
             )}

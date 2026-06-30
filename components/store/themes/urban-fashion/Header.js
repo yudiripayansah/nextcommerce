@@ -50,12 +50,14 @@ export default function UrbanFashionHeader() {
   return (
     <>
       {/* Announcement bar */}
-      <div
-        className="text-xs text-center py-2 tracking-widest uppercase"
-        style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
-      >
-        Pesan via WhatsApp — Gratis Ongkir seluruh Indonesia
-      </div>
+      {settings?.content?.announcement !== '' && (
+        <div
+          className="text-xs text-center py-2 tracking-widest uppercase"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
+        >
+          {settings?.content?.announcement ?? 'Pesan via WhatsApp — Gratis Ongkir seluruh Indonesia'}
+        </div>
+      )}
 
       <header
         className="sticky top-0 z-40"

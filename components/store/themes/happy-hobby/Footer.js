@@ -28,9 +28,12 @@ export default function HappyHobbyFooter() {
 
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
-              <p className="font-extrabold text-lg mb-3" style={{ color: 'var(--color-primary)' }}>
+              <p className="font-extrabold text-lg mb-1.5" style={{ color: 'var(--color-primary)' }}>
                 {storeName}
               </p>
+              {settings?.content?.footerTagline && (
+                <p className="text-sm text-gray-500 leading-relaxed mb-2">{settings.content.footerTagline}</p>
+              )}
               {settings?.address && (
                 <p className="text-sm text-gray-500 leading-relaxed mb-3">{settings.address}</p>
               )}

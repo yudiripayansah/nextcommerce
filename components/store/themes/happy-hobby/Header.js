@@ -46,12 +46,14 @@ export default function HappyHobbyHeader() {
   return (
     <header className="sticky top-0 z-40">
       {/* Announcement bar */}
-      <div
-        className="text-center py-2 text-xs font-medium tracking-wide"
-        style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
-      >
-        🎉 Gratis Ongkir Min. Belanja Rp200.000!
-      </div>
+      {settings?.content?.announcement !== '' && (
+        <div
+          className="text-center py-2 text-xs font-medium tracking-wide"
+          style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
+        >
+          {settings?.content?.announcement ?? '🎉 Gratis Ongkir Min. Belanja Rp200.000!'}
+        </div>
+      )}
 
       {/* Main nav */}
       <div className="bg-white" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
