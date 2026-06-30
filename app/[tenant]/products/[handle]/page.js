@@ -1,32 +1,48 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useTenant } from '@/contexts/TenantContext'
+import { getTenantBySlug } from '@/services/tenants'
 import { getProductByHandle } from '@/services/products'
-import ProductDetailClient from './ProductDetailClient'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { getSettings } from '@/services/settings'
+import ProductPageShell from './ProductPageShell'
+
+export async function generateMetadata({ params }) {
+  const { tenant: slug, handle } = await params
+  try {
+    const tenant = await getTenantBySlug(slug)
+    if (!tenant) return {}
+
+    const [product, settings] = await Promise.all([
+      getProductByHandle(tenant.id, handle),
+      getSettings(tenant.id),
+    ])
+    if (!product) return {}
+
+    const storeName = settings?.storeName || slug
+    const rawDesc = product.description
+      ? product.description.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 160)
+      : `${product.title} — tersedia di ${storeName}`
+
+    return {
+      title: product.title,
+      description: rawDesc,
+      openGraph: {
+        title: product.title,
+        description: rawDesc,
+        type: 'website',
+        ...(product.featuredImage && {
+          images: [{ url: product.featuredImage, width: 800, height: 600, alt: product.title }],
+        }),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: product.title,
+        description: rawDesc,
+        ...(product.featuredImage && { images: [product.featuredImage] }),
+      },
+    }
+  } catch {
+    return {}
+  }
+}
 
 export default function ProductPage() {
-  const { handle } = useParams()
-  const [product, setProduct] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const { tenant } = useTenant() || {}
-
-  useEffect(() => {
-    if (!tenant?.id) return
-    getProductByHandle(tenant.id, handle).then(setProduct).finally(() => setLoading(false))
-  }, [tenant?.id, handle])
-
-  if (loading) return <LoadingSpinner className="py-24" />
-
-  if (!product) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        <p className="text-gray-500">Produk tidak ditemukan.</p>
-      </div>
-    )
-  }
-
-  return <ProductDetailClient product={product} />
+  return <ProductPageShell />
 }

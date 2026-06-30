@@ -1,37 +1,48 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useTenant } from '@/contexts/TenantContext'
-import { useTheme } from '@/contexts/ThemeContext'
+import { getTenantBySlug } from '@/services/tenants'
 import { getCollectionByHandle } from '@/services/collections'
-import { getProductsByCollection } from '@/services/products'
-import UrbanFashionCollectionDetailPage from '@/components/store/themes/urban-fashion/CollectionDetailPage'
-import HappyHobbyCollectionDetailPage from '@/components/store/themes/happy-hobby/CollectionDetailPage'
+import { getSettings } from '@/services/settings'
+import CollectionPageShell from './CollectionPageShell'
+
+export async function generateMetadata({ params }) {
+  const { tenant: slug, handle } = await params
+  try {
+    const tenant = await getTenantBySlug(slug)
+    if (!tenant) return {}
+
+    const [collection, settings] = await Promise.all([
+      getCollectionByHandle(tenant.id, handle),
+      getSettings(tenant.id),
+    ])
+    if (!collection) return {}
+
+    const storeName = settings?.storeName || slug
+    const desc = collection.description
+      ? collection.description.slice(0, 160).trim()
+      : `Koleksi ${collection.title} — belanja di ${storeName}`
+
+    return {
+      title: collection.title,
+      description: desc,
+      openGraph: {
+        title: collection.title,
+        description: desc,
+        type: 'website',
+        ...(collection.image && {
+          images: [{ url: collection.image, width: 800, height: 600, alt: collection.title }],
+        }),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: collection.title,
+        description: desc,
+        ...(collection.image && { images: [collection.image] }),
+      },
+    }
+  } catch {
+    return {}
+  }
+}
 
 export default function CollectionDetailPage() {
-  const { handle } = useParams()
-  const [collection, setCollection] = useState(null)
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const { tenant } = useTenant() || {}
-  const { template } = useTheme() || {}
-
-  useEffect(() => {
-    if (!tenant?.id) return
-    async function load() {
-      const col = await getCollectionByHandle(tenant.id, handle)
-      if (!col) { setLoading(false); return }
-      setCollection(col)
-      const prods = await getProductsByCollection(tenant.id, col.id)
-      setProducts(prods)
-      setLoading(false)
-    }
-    load()
-  }, [tenant?.id, handle])
-
-  if (template === 'happy-hobby') {
-    return <HappyHobbyCollectionDetailPage collection={collection} products={products} loading={loading} />
-  }
-  return <UrbanFashionCollectionDetailPage collection={collection} products={products} loading={loading} />
+  return <CollectionPageShell />
 }
