@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebase-admin'
+import { db, collection, query, where, getDocs, doc, getDoc } from '@/lib/firestore'
 
 export const runtime = 'nodejs'
 
@@ -8,14 +8,11 @@ export async function GET(request, { params }) {
   let themeColor = '#111827'
 
   try {
-    const tenantsSnap = await adminDb.collection('tenants').where('slug', '==', slug).get()
+    const tenantsSnap = await getDocs(query(collection(db, 'tenants'), where('slug', '==', slug)))
     if (!tenantsSnap.empty) {
       const tenantId = tenantsSnap.docs[0].id
-      const settingsSnap = await adminDb
-        .collection('tenants').doc(tenantId)
-        .collection('settings').doc('store')
-        .get()
-      if (settingsSnap.exists) {
+      const settingsSnap = await getDoc(doc(db, 'tenants', tenantId, 'settings', 'store'))
+      if (settingsSnap.exists()) {
         const s = settingsSnap.data()
         storeName = s.storeName || slug
         themeColor = s.theme?.primary || '#111827'
