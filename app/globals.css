@@ -15,6 +15,10 @@
   --color-surface: #f9fafb;
   --color-text: #111827;
 
+  /* Derived from --color-text — auto-recompute when text color changes */
+  --color-text-muted: color-mix(in srgb, var(--color-text) 55%, transparent);
+  --color-border: color-mix(in srgb, var(--color-text) 12%, transparent);
+
   /* Template structural variables — Urban Fashion defaults */
   --tm-radius: 0px;
   --tm-radius-sm: 0px;

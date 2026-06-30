@@ -16,9 +16,9 @@ export default function ProductVariantSelector({ options, variants, selectedOpti
     <div className="space-y-5">
       {options.map((opt) => (
         <div key={opt.name}>
-          <p className="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">
+          <p className="text-sm font-semibold mb-2 uppercase tracking-wide" style={{ color: 'var(--color-text)' }}>
             {opt.name}:{' '}
-            <span className="font-normal normal-case tracking-normal text-gray-600">
+            <span className="font-normal normal-case tracking-normal" style={{ color: 'var(--color-text-muted)' }}>
               {selectedOptions[opt.name] || '-'}
             </span>
           </p>
@@ -31,18 +31,16 @@ export default function ProductVariantSelector({ options, variants, selectedOpti
                   key={val}
                   onClick={() => available && selectOption(opt.name, val)}
                   disabled={!available}
-                  className={`min-w-[44px] px-3 py-2 text-sm font-medium border transition-all rounded-sm ${
-                    selected
-                      ? ''
-                      : available
-                      ? 'border-gray-300 text-gray-800 hover:opacity-80'
-                      : 'border-gray-200 text-gray-300 cursor-not-allowed relative overflow-hidden'
-                  }`}
-                  style={selected ? { background: 'var(--color-primary)', color: 'var(--color-primary-fg)', borderColor: 'var(--color-primary)' } : undefined}
+                  className="min-w-[44px] px-3 py-2 text-sm font-medium border transition-all rounded-sm relative overflow-hidden"
+                  style={selected
+                    ? { background: 'var(--color-primary)', color: 'var(--color-primary-fg)', borderColor: 'var(--color-primary)' }
+                    : available
+                    ? { color: 'var(--color-text)', borderColor: 'var(--color-border)' }
+                    : { color: 'var(--color-border)', borderColor: 'var(--color-border)', cursor: 'not-allowed' }}
                 >
                   {!available && (
                     <span className="absolute inset-0 flex items-center justify-center">
-                      <span className="absolute w-full border-t border-gray-300 rotate-45" />
+                      <span className="absolute w-full rotate-45" style={{ borderTop: '1px solid var(--color-border)' }} />
                     </span>
                   )}
                   {val}
