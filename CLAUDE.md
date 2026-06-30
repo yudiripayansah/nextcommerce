@@ -366,6 +366,9 @@ tenants/            — tenant metadata (slug, name, plan, status)
   facebook: "",
   instagram: "",
   tiktok: "",
+  bankAccounts: [         // array of payment accounts shown to customers
+    { id: "", bankName: "BCA", accountNumber: "", accountHolder: "" }
+  ],
   theme: {
     template: "urban-fashion",
     primary: "#000000",
@@ -465,6 +468,9 @@ tenants/            — tenant metadata (slug, name, plan, status)
   totalItems: 0,
   totalAmount: 0,
   status: "new",      // new | contacted | paid | shipped | completed | cancelled
+  trackingNumber: "",     // set by admin after shipping
+  logisticsProvider: "",  // e.g. "JNE", "J&T Express", "SiCepat", etc.
+  trackingUpdatedAt: null,
   createdAt: null,
   updatedAt: null
 }

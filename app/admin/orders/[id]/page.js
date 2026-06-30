@@ -8,9 +8,24 @@ import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/contexts/AuthContext'
-import { getOrderById, updateOrderStatus } from '@/services/orders'
+import { getOrderById, updateOrderStatus, updateOrderTracking } from '@/services/orders'
 import { ORDER_STATUSES } from '@/constants'
 import toast from 'react-hot-toast'
+
+const LOGISTICS_OPTIONS = [
+  { value: '', label: 'Pilih Ekspedisi' },
+  { value: 'JNE', label: 'JNE' },
+  { value: 'J&T Express', label: 'J&T Express' },
+  { value: 'SiCepat', label: 'SiCepat' },
+  { value: 'Anteraja', label: 'Anteraja' },
+  { value: 'TIKI', label: 'TIKI' },
+  { value: 'Pos Indonesia', label: 'Pos Indonesia' },
+  { value: 'Wahana', label: 'Wahana' },
+  { value: 'IDExpress', label: 'IDExpress' },
+  { value: 'Ninja Express', label: 'Ninja Express' },
+  { value: 'Lion Parcel', label: 'Lion Parcel' },
+  { value: 'Lainnya', label: 'Lainnya' },
+]
 
 export default function OrderDetailPage() {
   const { id } = useParams()
@@ -20,11 +35,18 @@ export default function OrderDetailPage() {
   const [status, setStatus] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Tracking state
+  const [trackingProvider, setTrackingProvider] = useState('')
+  const [trackingNumber, setTrackingNumber] = useState('')
+  const [savingTracking, setSavingTracking] = useState(false)
+
   useEffect(() => {
     if (!tenantId) return
     getOrderById(tenantId, id).then((data) => {
       setOrder(data)
       setStatus(data?.status || '')
+      setTrackingProvider(data?.logisticsProvider || '')
+      setTrackingNumber(data?.trackingNumber || '')
       setLoading(false)
     })
   }, [tenantId, id])
@@ -42,8 +64,32 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleTrackingUpdate() {
+    if (!trackingNumber.trim()) {
+      toast.error('Nomor resi tidak boleh kosong')
+      return
+    }
+    setSavingTracking(true)
+    try {
+      await updateOrderTracking(tenantId, id, trackingNumber.trim(), trackingProvider)
+      setOrder((prev) => ({ ...prev, trackingNumber: trackingNumber.trim(), logisticsProvider: trackingProvider }))
+      toast.success('Nomor resi disimpan')
+    } catch {
+      toast.error('Gagal menyimpan nomor resi')
+    } finally {
+      setSavingTracking(false)
+    }
+  }
+
+  function clearTracking() {
+    setTrackingNumber('')
+    setTrackingProvider('')
+  }
+
   if (loading) return <AdminLayout title="Detail Pesanan"><LoadingSpinner className="py-16" /></AdminLayout>
   if (!order) return <AdminLayout title="Detail Pesanan"><p className="text-gray-500">Pesanan tidak ditemukan.</p></AdminLayout>
+
+  const hasTracking = order.trackingNumber
 
   return (
     <AdminLayout title="Detail Pesanan">
@@ -52,6 +98,7 @@ export default function OrderDetailPage() {
           <OrderDetailCard order={order} />
         </div>
 
+        {/* Status update */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h3 className="font-medium text-gray-900 mb-3">Update Status</h3>
           <div className="flex gap-3">
@@ -65,6 +112,69 @@ export default function OrderDetailPage() {
             <Button onClick={handleStatusUpdate} loading={saving}>
               Simpan
             </Button>
+          </div>
+        </div>
+
+        {/* Tracking number */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-medium text-gray-900">Nomor Resi Pengiriman</h3>
+              {hasTracking && (
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {order.logisticsProvider && <span className="font-medium">{order.logisticsProvider}</span>}
+                  {order.logisticsProvider && ' · '}
+                  <span className="font-mono">{order.trackingNumber}</span>
+                </p>
+              )}
+            </div>
+            {hasTracking && (
+              <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-1 rounded-full font-medium">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Terisi
+              </span>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1.5 block">Ekspedisi</label>
+              <select
+                value={trackingProvider}
+                onChange={(e) => setTrackingProvider(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {LOGISTICS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1.5 block">Nomor Resi</label>
+              <input
+                type="text"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Contoh: JNE0012345678"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleTrackingUpdate} loading={savingTracking}>
+                {hasTracking ? 'Update Resi' : 'Simpan Resi'}
+              </Button>
+              {(trackingNumber !== (order.trackingNumber || '') || trackingProvider !== (order.logisticsProvider || '')) && (
+                <button
+                  type="button"
+                  onClick={clearTracking}
+                  className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

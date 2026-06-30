@@ -20,7 +20,13 @@ const DEFAULTS = {
   facebook: '',
   instagram: '',
   tiktok: '',
+  bankAccounts: [],
 }
+
+const BANK_OPTIONS = [
+  'BCA', 'BRI', 'BNI', 'Mandiri', 'BSI', 'CIMB Niaga',
+  'Danamon', 'Permata', 'OCBC', 'BTN', 'GoPay', 'OVO', 'DANA', 'ShopeePay', 'Lainnya',
+]
 
 export default function SettingsPage() {
   const { tenantId } = useAuth()
@@ -29,13 +35,43 @@ export default function SettingsPage() {
   const [logoPicker, setLogoPicker] = useState(false)
   const [faviconPicker, setFaviconPicker] = useState(false)
 
+  // Bank account add form state
+  const [bankForm, setBankForm] = useState({ bankName: 'BCA', accountNumber: '', accountHolder: '' })
+  const [showBankForm, setShowBankForm] = useState(false)
+
   useEffect(() => {
     if (!tenantId) return
-    getSettings(tenantId).then((s) => { if (s) setForm({ ...DEFAULTS, ...s }) })
+    getSettings(tenantId).then((s) => {
+      if (s) setForm({ ...DEFAULTS, ...s, bankAccounts: s.bankAccounts || [] })
+    })
   }, [tenantId])
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function setBankField(field, value) {
+    setBankForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function addBankAccount() {
+    if (!bankForm.accountNumber.trim() || !bankForm.accountHolder.trim()) {
+      toast.error('Nomor rekening dan nama pemilik wajib diisi')
+      return
+    }
+    const newAccount = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      bankName: bankForm.bankName,
+      accountNumber: bankForm.accountNumber.trim(),
+      accountHolder: bankForm.accountHolder.trim(),
+    }
+    set('bankAccounts', [...(form.bankAccounts || []), newAccount])
+    setBankForm({ bankName: 'BCA', accountNumber: '', accountHolder: '' })
+    setShowBankForm(false)
+  }
+
+  function removeBankAccount(id) {
+    set('bankAccounts', (form.bankAccounts || []).filter((a) => a.id !== id))
   }
 
   async function handleSave(e) {
@@ -55,6 +91,7 @@ export default function SettingsPage() {
   return (
     <AdminLayout title="Pengaturan">
       <form onSubmit={handleSave} className="max-w-2xl space-y-6">
+
         {/* Store info */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h3 className="font-semibold text-gray-900">Informasi Toko</h3>
@@ -71,6 +108,123 @@ export default function SettingsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+        </div>
+
+        {/* Bank accounts */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900">Rekening Bank</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Info pembayaran yang ditampilkan ke pelanggan</p>
+            </div>
+            {!showBankForm && (
+              <button
+                type="button"
+                onClick={() => setShowBankForm(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Rekening
+              </button>
+            )}
+          </div>
+
+          {/* Add form */}
+          {showBankForm && (
+            <div className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-3">
+              <p className="text-sm font-medium text-gray-700">Tambah Rekening Baru</p>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Nama Bank / E-Wallet</label>
+                <select
+                  value={bankForm.bankName}
+                  onChange={(e) => setBankField('bankName', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  {BANK_OPTIONS.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Nomor Rekening / Nomor HP</label>
+                <input
+                  type="text"
+                  value={bankForm.accountNumber}
+                  onChange={(e) => setBankField('accountNumber', e.target.value)}
+                  placeholder="0812xxxxxxxx atau 1234567890"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Nama Pemilik Rekening</label>
+                <input
+                  type="text"
+                  value={bankForm.accountHolder}
+                  onChange={(e) => setBankField('accountHolder', e.target.value)}
+                  placeholder="Nama sesuai rekening"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={addBankAccount}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Tambah
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowBankForm(false); setBankForm({ bankName: 'BCA', accountNumber: '', accountHolder: '' }) }}
+                  className="px-4 py-2 bg-white text-gray-600 text-sm font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Account list */}
+          {(form.bankAccounts || []).length === 0 && !showBankForm ? (
+            <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
+              <svg className="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              <p className="text-sm text-gray-400">Belum ada rekening bank</p>
+              <p className="text-xs text-gray-400 mt-0.5">Klik &ldquo;Tambah Rekening&rdquo; untuk menambahkan</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(form.bankAccounts || []).map((account) => (
+                <div key={account.id} className="flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">{account.bankName}</p>
+                      <p className="text-sm font-mono text-gray-700">{account.accountNumber}</p>
+                      <p className="text-xs text-gray-500">a.n. {account.accountHolder}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeBankAccount(account.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    title="Hapus"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Logo */}

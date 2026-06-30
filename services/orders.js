@@ -51,6 +51,15 @@ export async function updateOrderStatus(tenantId, id, status) {
   })
 }
 
+export async function updateOrderTracking(tenantId, id, trackingNumber, logisticsProvider) {
+  await updateDoc(ref(tenantId, id), {
+    trackingNumber: trackingNumber || '',
+    logisticsProvider: logisticsProvider || '',
+    trackingUpdatedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function getOrdersByCustomer(tenantId, customerId) {
   const q = query(col(tenantId), where('customerId', '==', customerId))
   const snap = await getDocs(q)
