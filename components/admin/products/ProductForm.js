@@ -13,25 +13,48 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getCollections } from '@/services/collections'
 import { PRODUCT_STATUSES } from '@/constants'
 
+function makeDefaultVariant() {
+  return {
+    id: crypto.randomUUID(),
+    title: 'Default',
+    sku: '',
+    price: 0,
+    stock: 0,
+    image: '',
+    option1: null,
+    option2: null,
+    option3: null,
+  }
+}
+
 export default function ProductForm({ initialData, onSubmit, loading }) {
   const { tenantId } = useAuth()
-  const [form, setForm] = useState({
-    title: '',
-    handle: '',
-    description: '',
-    featuredImage: '',
-    images: [],
-    tags: [],
-    collectionId: '',
-    collectionTitle: '',
-    options: [],
-    variants: [],
-    status: 'active',
-    ...initialData,
+  const [form, setForm] = useState(() => {
+    const base = {
+      title: '',
+      handle: '',
+      description: '',
+      featuredImage: '',
+      images: [],
+      tags: [],
+      collectionId: '',
+      collectionTitle: '',
+      options: [],
+      variants: [],
+      status: 'active',
+      ...initialData,
+    }
+    // Always need at least one variant to hold price/stock
+    const hasFilledOptions = base.options?.some((o) => o.values?.length > 0)
+    if (!hasFilledOptions && !base.variants?.length) {
+      base.variants = [makeDefaultVariant()]
+    }
+    return base
   })
   const [errors, setErrors] = useState({})
   const [collections, setCollections] = useState([])
   const [globalPrice, setGlobalPrice] = useState('')
+  const [rawTags, setRawTags] = useState(null)
 
   useEffect(() => {
     if (!tenantId) return
@@ -60,6 +83,18 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
 
   function handleOptionsChange(options) {
     const price = Number(globalPrice) || 0
+    const hasValues = options.some((o) => o.name && o.values.length > 0)
+
+    if (!hasValues) {
+      // No filled options → keep or restore the single default variant
+      setForm((prev) => {
+        const existing = prev.variants.find((v) => !v.option1)
+        const defaultV = existing ?? { ...makeDefaultVariant(), price: price || 0 }
+        return { ...prev, options, variants: [defaultV] }
+      })
+      return
+    }
+
     const variants = generateVariantCombinations(options).map((v) => ({
       ...v,
       price: price || v.price,
@@ -83,14 +118,6 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
       collectionId: id,
       collectionTitle: found?.title || '',
     }))
-  }
-
-  function handleTagsChange(e) {
-    const tags = e.target.value
-      .split(',')
-      .map((t) => t.trim())
-      .filter(Boolean)
-    set('tags', tags)
   }
 
   function validate() {
@@ -213,8 +240,16 @@ export default function ProductForm({ initialData, onSubmit, loading }) {
               <label className="text-sm font-medium text-gray-700 mb-1 block">Tags</label>
               <input
                 type="text"
-                value={form.tags.join(', ')}
-                onChange={handleTagsChange}
+                value={rawTags !== null ? rawTags : form.tags.join(', ')}
+                onChange={(e) => setRawTags(e.target.value)}
+                onBlur={() => {
+                  const tags = (rawTags ?? '')
+                    .split(',')
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                  set('tags', tags)
+                  setRawTags(null)
+                }}
                 placeholder="tag1, tag2, tag3"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
