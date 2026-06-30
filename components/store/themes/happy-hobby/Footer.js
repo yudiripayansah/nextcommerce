@@ -145,7 +145,7 @@ export default function HappyHobbyFooter() {
       <div style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}>
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
           <p className="text-xs opacity-80">
-            © {new Date().getFullYear()} {storeName}. All rights reserved.
+            © <span suppressHydrationWarning>{new Date().getFullYear()}</span> {storeName}. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <Link href={`/${slug}/how-to-buy`} className="text-xs opacity-80 hover:opacity-100 transition-opacity">Cara Pembelian</Link>

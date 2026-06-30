@@ -10,6 +10,7 @@ import Footer from '@/components/store/Footer'
 import FaviconSync from '@/components/store/FaviconSync'
 import PWAInstallPrompt from '@/components/store/PWAInstallPrompt'
 import ServiceWorkerRegistrar from '@/components/store/ServiceWorkerRegistrar'
+import StoreErrorBoundary from '@/components/store/StoreErrorBoundary'
 
 function StoreShellInner({ slug, children }) {
   const { tenant, loading } = useTenant()
@@ -47,10 +48,12 @@ function StoreShellInner({ slug, children }) {
 
 export default function TenantStoreShell({ slug, children }) {
   return (
-    <TenantProvider slug={slug}>
-      <StoreShellInner slug={slug}>
-        {children}
-      </StoreShellInner>
-    </TenantProvider>
+    <StoreErrorBoundary>
+      <TenantProvider slug={slug}>
+        <StoreShellInner slug={slug}>
+          {children}
+        </StoreShellInner>
+      </TenantProvider>
+    </StoreErrorBoundary>
   )
 }

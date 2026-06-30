@@ -20,11 +20,9 @@ function readLocalTheme(slug) {
 }
 
 export function ThemeProvider({ children }) {
-  // Init from what the inline script already set on <html> to avoid hydration flash
-  const [template, setTemplate] = useState(() => {
-    if (typeof window === 'undefined') return 'urban-fashion'
-    return document.documentElement.getAttribute('data-template') || 'urban-fashion'
-  })
+  // Always start with the same stable value on server and client to avoid hydration mismatch.
+  // useLayoutEffect will apply the correct theme from localStorage before first paint.
+  const [template, setTemplate] = useState('urban-fashion')
   const [colors, setColors] = useState(DEFAULT_PRESET.colors)
   const [ready, setReady] = useState(false)
   const settings = useSettings()
@@ -32,30 +30,34 @@ export function ThemeProvider({ children }) {
   const slug = tenant?.slug
 
   useLayoutEffect(() => {
-    // Skip when slug is unknown — inline script already handled the initial render.
-    // Reading the no-slug key here would pick up stale data from a different tenant.
-    if (!slug) {
-      setReady(true)
-      return
-    }
-    const local = readLocalTheme(slug)
-    if (local) {
-      setTemplate(local.template)
-      setColors(local.colors)
-      applyThemeVars(local.colors)
-      applyTemplate(local.template)
-    }
+    try {
+      const local = slug ? readLocalTheme(slug) : null
+      if (local) {
+        setTemplate(local.template)
+        setColors(local.colors)
+        applyThemeVars(local.colors)
+        applyTemplate(local.template)
+      }
+    } catch {}
     setReady(true)
   }, [slug])
 
+  // Safety fallback: if useLayoutEffect never fires (edge case), show content after 800ms
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 800)
+    return () => clearTimeout(t)
+  }, [])
+
   useEffect(() => {
     if (!settings) return
-    const { template: t, colors: c } = parseStoredTheme(settings.theme)
-    setTemplate(t)
-    setColors(c)
-    applyThemeVars(c)
-    applyTemplate(t)
-    try { localStorage.setItem(getStorageKey(slug), JSON.stringify({ template: t, ...c })) } catch {}
+    try {
+      const { template: t, colors: c } = parseStoredTheme(settings.theme)
+      setTemplate(t)
+      setColors(c)
+      applyThemeVars(c)
+      applyTemplate(t)
+      localStorage.setItem(getStorageKey(slug), JSON.stringify({ template: t, ...c }))
+    } catch {}
   }, [settings, slug])
 
   function setTheme({ template: t, colors: c }) {

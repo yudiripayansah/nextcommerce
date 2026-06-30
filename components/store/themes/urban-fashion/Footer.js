@@ -121,7 +121,7 @@ export default function Footer() {
       <div style={{ borderTop: '1px solid var(--color-border)' }} className="py-5">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2">
           <p className="text-[11px] tracking-wide" style={mutedStyle}>
-            © {new Date().getFullYear()} {settings?.storeName || 'Store'}. All rights reserved.
+            © <span suppressHydrationWarning>{new Date().getFullYear()}</span> {settings?.storeName || 'Store'}. All rights reserved.
           </p>
           <div className="flex items-center gap-5">
             {[
