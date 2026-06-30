@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase-admin'
+import { getAdminDb } from '@/lib/firebase-admin'
 import { getMessaging } from 'firebase-admin/messaging'
 import { getApp } from 'firebase-admin/app'
 import { sanitizeApiInput } from '@/lib/sanitize'
@@ -55,6 +55,7 @@ export async function POST(request) {
     const safeAmount = typeof totalAmount === 'number' && Number.isFinite(totalAmount) ? totalAmount : 0
 
     // Resolve admin UID from tenant
+    const adminDb = getAdminDb()
     const tenantSnap = await adminDb.collection('tenants').doc(tenantId).get()
     if (!tenantSnap.exists) return NextResponse.json({ ok: false })
 

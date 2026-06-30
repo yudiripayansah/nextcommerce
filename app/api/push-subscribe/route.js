@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { adminAuth, adminDb } from '@/lib/firebase-admin'
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin'
 
 export const runtime = 'nodejs'
 
@@ -9,6 +9,9 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
+    const adminAuth = getAdminAuth()
+    const adminDb = getAdminDb()
+
     const token = authHeader.slice(7)
     const decoded = await adminAuth.verifyIdToken(token)
 
@@ -29,6 +32,9 @@ export async function DELETE(request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
+    const adminAuth = getAdminAuth()
+    const adminDb = getAdminDb()
+
     const token = authHeader.slice(7)
     const decoded = await adminAuth.verifyIdToken(token)
     const { FieldValue } = await import('firebase-admin/firestore')

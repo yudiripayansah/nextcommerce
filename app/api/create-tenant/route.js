@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { adminAuth, adminDb } from '@/lib/firebase-admin'
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin'
 import { FieldValue } from 'firebase-admin/firestore'
 import { sanitizeApiInput } from '@/lib/sanitize'
 
@@ -26,6 +26,9 @@ export async function POST(request) {
   }
 
   try {
+    const adminAuth = getAdminAuth()
+    const adminDb = getAdminDb()
+
     const token = authHeader.slice(7)
     const decoded = await adminAuth.verifyIdToken(token)
 

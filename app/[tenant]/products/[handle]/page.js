@@ -1,17 +1,15 @@
-import { getTenantBySlug } from '@/services/tenants'
-import { getProductByHandle } from '@/services/products'
-import { getSettings } from '@/services/settings'
+import { metaTenantBySlug, metaSettings, metaProduct } from '@/lib/firestore-meta'
 import ProductPageShell from './ProductPageShell'
 
 export async function generateMetadata({ params }) {
   const { tenant: slug, handle } = await params
   try {
-    const tenant = await getTenantBySlug(slug)
+    const tenant = await metaTenantBySlug(slug)
     if (!tenant) return {}
 
     const [product, settings] = await Promise.all([
-      getProductByHandle(tenant.id, handle),
-      getSettings(tenant.id),
+      metaProduct(tenant.id, handle),
+      metaSettings(tenant.id),
     ])
     if (!product) return {}
 

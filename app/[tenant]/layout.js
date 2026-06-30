@@ -1,14 +1,13 @@
 import TenantStoreShell from './TenantStoreShell'
-import { getTenantBySlug } from '@/services/tenants'
-import { getSettings } from '@/services/settings'
+import { metaTenantBySlug, metaSettings } from '@/lib/firestore-meta'
 
 export async function generateMetadata({ params }) {
   const { tenant: slug } = await params
   try {
-    const tenant = await getTenantBySlug(slug)
+    const tenant = await metaTenantBySlug(slug)
     if (!tenant) return { manifest: `/api/manifest/${slug}` }
 
-    const settings = await getSettings(tenant.id)
+    const settings = await metaSettings(tenant.id)
     const storeName = settings?.storeName || slug
     const ogImage = settings?.logo || null
 

@@ -1,17 +1,15 @@
-import { getTenantBySlug } from '@/services/tenants'
-import { getCollectionByHandle } from '@/services/collections'
-import { getSettings } from '@/services/settings'
+import { metaTenantBySlug, metaSettings, metaCollection } from '@/lib/firestore-meta'
 import CollectionPageShell from './CollectionPageShell'
 
 export async function generateMetadata({ params }) {
   const { tenant: slug, handle } = await params
   try {
-    const tenant = await getTenantBySlug(slug)
+    const tenant = await metaTenantBySlug(slug)
     if (!tenant) return {}
 
     const [collection, settings] = await Promise.all([
-      getCollectionByHandle(tenant.id, handle),
-      getSettings(tenant.id),
+      metaCollection(tenant.id, handle),
+      metaSettings(tenant.id),
     ])
     if (!collection) return {}
 
