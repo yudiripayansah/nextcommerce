@@ -162,6 +162,7 @@ All three can be active in the same browser simultaneously without conflict.
 /{slug}/collections/[handle]
 /{slug}/products/[handle]
 /{slug}/cart
+/{slug}/checkout
 /{slug}/about-us
 /{slug}/contact-us
 /{slug}/how-to-buy
@@ -466,7 +467,17 @@ tenants/            — tenant metadata (slug, name, plan, status)
   notes: "",
   items: [{ productId, productTitle, variantTitle, price, quantity, subtotal }],
   totalItems: 0,
-  totalAmount: 0,
+  subtotal: 0,          // sum of item subtotals (before shipping)
+  shippingCost: 0,      // entered by customer at checkout
+  totalAmount: 0,       // subtotal + shippingCost
+  shippingAddress: {    // filled at checkout
+    recipientName: "",
+    recipientPhone: "",
+    address: "",
+    city: "",
+    province: "",
+    postalCode: "",
+  },
   status: "new",      // new | contacted | paid | shipped | completed | cancelled
   trackingNumber: "",     // set by admin after shipping
   logisticsProvider: "",  // e.g. "JNE", "J&T Express", "SiCepat", etc.

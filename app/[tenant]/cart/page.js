@@ -3,14 +3,11 @@
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import CartItem from '@/components/store/CartItem'
-import WhatsAppOrderButton from '@/components/store/WhatsAppOrderButton'
 import { useCart } from '@/store/cartStore'
-import { useSettings } from '@/contexts/SettingsContext'
 import { formatCurrency } from '@/lib/helpers'
 
 export default function CartPage() {
   const { cart, totalItems, totalAmount } = useCart()
-  const settings = useSettings()
   const { tenant: tenantSlug } = useParams()
 
   if (cart.items.length === 0) {
@@ -47,24 +44,30 @@ export default function CartPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 sticky top-20">
             <h2 className="font-semibold text-gray-900 mb-4">Ringkasan</h2>
-            <div className="space-y-2 text-sm mb-4">
+            <div className="space-y-2 text-sm mb-1">
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Item</span>
                 <span className="font-medium">{totalItems}</span>
               </div>
-              <div className="flex justify-between text-base font-bold border-t pt-2 mt-2">
-                <span>Total</span>
+              <div className="flex justify-between text-base font-bold border-t border-gray-100 pt-3 mt-2">
+                <span>Subtotal</span>
                 <span>{formatCurrency(totalAmount)}</span>
               </div>
             </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="font-semibold text-gray-900 mb-4">Data Pemesanan</h2>
-            <WhatsAppOrderButton settings={settings} />
+            <p className="text-xs text-gray-400 mb-4">Ongkir dihitung di halaman checkout</p>
+            <Link
+              href={`/${tenantSlug}/checkout`}
+              className="flex items-center justify-center gap-2 w-full font-semibold py-3 rounded-xl transition-opacity hover:opacity-90"
+              style={{ background: 'var(--color-primary)', color: 'var(--color-primary-fg)' }}
+            >
+              Lanjutkan ke Checkout
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
       </div>
