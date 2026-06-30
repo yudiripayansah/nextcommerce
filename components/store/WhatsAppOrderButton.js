@@ -34,7 +34,7 @@ function CopyButton({ text }) {
 export default function WhatsAppOrderButton({ settings }) {
   const { cart, totalItems, totalAmount, dispatch } = useCart()
   const { customerUser, customer } = useCustomerAuth()
-  const { tenant } = useTenant()
+  const { tenant, slug } = useTenant()
   const [step, setStep] = useState('form') // 'form' | 'confirm' | 'loading'
   const [name, setName] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -124,8 +124,8 @@ export default function WhatsAppOrderButton({ settings }) {
       <form onSubmit={handleSubmit} className="space-y-3">
         {!customerUser && (
           <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-            <Link href="account/login" className="text-black font-medium hover:underline">Masuk</Link> atau{' '}
-            <Link href="account/register" className="text-black font-medium hover:underline">daftar</Link>{' '}
+            <Link href={`/${slug}/account/login`} className="text-black font-medium hover:underline">Masuk</Link> atau{' '}
+            <Link href={`/${slug}/account/register`} className="text-black font-medium hover:underline">daftar</Link>{' '}
             untuk mengisi otomatis dan menyimpan riwayat pesanan.
           </p>
         )}

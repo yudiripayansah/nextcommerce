@@ -1,13 +1,23 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useSettings } from '@/contexts/SettingsContext'
 import { useTenant } from '@/contexts/TenantContext'
+import { getCollections } from '@/services/collections'
 
 export default function HappyHobbyFooter() {
   const settings = useSettings()
-  const { slug } = useTenant()
+  const { slug, tenant } = useTenant()
   const storeName = settings?.storeName || 'MyShop'
+  const [collections, setCollections] = useState([])
+
+  useEffect(() => {
+    if (!tenant?.id) return
+    getCollections(tenant.id).then((cols) =>
+      setCollections(cols.filter((c) => c.status === 'active').slice(0, 4))
+    )
+  }, [tenant?.id])
 
   return (
     <footer>
@@ -44,10 +54,26 @@ export default function HappyHobbyFooter() {
             <div>
               <p className="font-bold text-sm mb-4" style={{ color: 'var(--color-text)' }}>Belanja</p>
               <ul className="space-y-2.5">
-                <li><Link href={`/${slug}/collections`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Semua Produk</Link></li>
-                <li><Link href={`/${slug}/collections/kaos-pria`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kaos Pria</Link></li>
-                <li><Link href={`/${slug}/collections/kaos-wanita`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Kaos Wanita</Link></li>
-                <li><Link href={`/${slug}/collections/celana`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">Celana</Link></li>
+                {collections.length > 0
+                  ? collections.map((col) => (
+                      <li key={col.id}>
+                        <Link href={`/${slug}/collections/${col.handle}`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
+                          {col.title}
+                        </Link>
+                      </li>
+                    ))
+                  : (
+                    <li>
+                      <Link href={`/${slug}/collections`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
+                        Semua Produk
+                      </Link>
+                    </li>
+                  )}
+                <li>
+                  <Link href={`/${slug}/collections`} className="text-sm text-gray-500 hover:text-gray-800 transition-colors">
+                    Semua Produk
+                  </Link>
+                </li>
               </ul>
             </div>
 
